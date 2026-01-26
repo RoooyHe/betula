@@ -1,0 +1,11 @@
+[package]
+name = "betula"
+version = "0.0.1"
+authors = ["RoyHe roooyHe@163.com"]
+edition = "2024"
+description = "Makepad simple example"
+license = "MIT OR Apache-2.0"
+metadata.makepad-auto-version = "EVyKRfOGV339Re5CS45PMHHxw_M="
+
+[dependencies]
+makepad-widgets = { git = "https://github.com/makepad/makepad", branch = "dev" }
