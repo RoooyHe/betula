@@ -4,6 +4,8 @@ use std::path::{Path, PathBuf};
 live_design! {
     use link::widgets::*;
     PLACEHOLDER = dep("crate://self/resources/placeholder.jpg");
+    LEFT_ARROW = dep("crate://self/resources/le1.svg");
+    RIGHT_ARROW = dep("crate://self/resources/le2.svg");
 
     ImageItem = <View> {
         width: 256,
@@ -34,11 +36,48 @@ live_design! {
         }
     }
 
+    SlideshowNavigateButton = <Button> {
+        width: 50,
+        height: Fill,
+        draw_bg: {
+            color: #fff0,
+            color_down: #fff2,
+        }
+        icon_walk: { width: 9 },
+        text: "",
+        grab_key_focus: false,
+    }
+
+    SlideshowOverlay = <View> {
+        height: Fill,
+        width: Fill,
+        cursor: Arrow,
+        capture_overload: true,
+
+        navigate_left = <SlideshowNavigateButton> {}
+        <Filler> {}
+        navigate_right = <SlideshowNavigateButton> {}
+    }
+
+    Slideshow = <View> {
+        flow: Overlay,
+
+        image = <Image> {
+            width: Fill,
+            height: Fill,
+            fit: Biggest,
+            source: (PLACEHOLDER)
+        }
+        overlay = <SlideshowOverlay> {}
+    }
+
     App = {{App}} {
+        placeholder: (placeholder)
+
         ui: <Root> {
             <Window> {
                 body = <View> {
-                    <ImageGrid> {}
+                    slideshow = <Slideshow> {}
                 }
             }
         }
@@ -47,6 +86,8 @@ live_design! {
 
 #[derive(Live)]
 pub struct App {
+    #[live]
+    placeholder: LiveDependency,
     #[live]
     ui: WidgetRef,
     #[rust]
@@ -79,11 +120,29 @@ impl App {
         }
         self.ui.redraw(cx);
     }
+
+    fn set_current_image(&mut self, cx: &mut Cx, image_idx: Option<usize>) {
+        self.state.current_image_idx = image_idx;
+
+        let image = self.ui.image(id!(slideshow.image));
+        if let Some(image_idx) = self.state.current_image_idx {
+            let image_path = &self.state.image_paths[image_idx];
+            image
+                .load_image_file_by_path_async(cx, &image_path)
+                .unwrap();
+        } else {
+            image
+                .load_image_dep_by_path(cx, self.placeholder.as_str())
+                .unwrap();
+        }
+
+        self.ui.redraw(cx);
+    }
 }
 
 impl LiveHook for App {
     fn after_new_from_doc(&mut self, _cx: &mut Cx) {
-        let path = "C:\\Users\\Roy\\RustroverProjects\\betula\\resources\\placeholder.jpg";
+        let path = "C:\\Users\\Roy\\RustroverProjects\\betula\\resources";
         self.load_image_paths(_cx, path.as_ref());
     }
 }
@@ -115,7 +174,7 @@ impl Widget for ImageRow {
                     let first_image_idx = state.first_image_idx_for_row(row_idx);
                     let image_idx = first_image_idx + item_idx;
                     let image_path = &state.image_paths[image_idx];
-                    let image = item.image(&[id!(image)]);
+                    let image = item.image(id!(image));
                     image
                         .load_image_file_by_path_async(cx, &image_path)
                         .unwrap();
@@ -163,6 +222,7 @@ impl Widget for ImageGrid {
 pub struct State {
     image_paths: Vec<PathBuf>,
     max_images_per_row: usize,
+    current_image_idx: Option<usize>,
 }
 
 impl Default for State {
@@ -170,6 +230,7 @@ impl Default for State {
         Self {
             image_paths: Vec::new(),
             max_images_per_row: 4,
+            current_image_idx: None,
         }
     }
 }

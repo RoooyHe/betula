@@ -8,4 +8,6 @@ license = "MIT OR Apache-2.0"
 metadata.makepad-auto-version = "EVyKRfOGV339Re5CS45PMHHxw_M="
 
 [dependencies]
-makepad-widgets = { git = "https://github.com/makepad/makepad", branch = "dev" }
+makepad-widgets = "1.0.0"
+
+
