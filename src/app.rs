@@ -3,9 +3,9 @@ use std::path::{Path, PathBuf};
 
 live_design! {
     use link::widgets::*;
-    PLACEHOLDER = dep("crate://self/resources/placeholder.jpg");
-    LEFT_ARROW = dep("crate://self/resources/le1.svg");
-    RIGHT_ARROW = dep("crate://self/resources/le2.svg");
+    PLACEHOLDER = dep("crate://self/resources/placeholder.png");
+    LEFT_ARROW = dep("crate://self/resources/left_arrow.svg");
+    RIGHT_ARROW = dep("crate://self/resources/right_arrow.svg");
 
     ImageItem = <View> {
         width: 256,
@@ -54,9 +54,17 @@ live_design! {
         cursor: Arrow,
         capture_overload: true,
 
-        navigate_left = <SlideshowNavigateButton> {}
+        navigate_left = <SlideshowNavigateButton> {
+             draw_icon: {
+                svg_file: (LEFT_ARROW)
+            }
+        }
         <Filler> {}
-        navigate_right = <SlideshowNavigateButton> {}
+        navigate_right = <SlideshowNavigateButton> {
+              draw_icon: {
+                svg_file: (RIGHT_ARROW)
+            }
+        }
     }
 
     Slideshow = <View> {
@@ -72,7 +80,7 @@ live_design! {
     }
 
     App = {{App}} {
-        placeholder: (placeholder)
+        placeholder: (PLACEHOLDER),
 
         ui: <Root> {
             <Window> {
@@ -96,8 +104,9 @@ pub struct App {
 
 impl AppMain for App {
     fn handle_event(&mut self, cx: &mut Cx, event: &Event) {
-        let mut scope = Scope::with_data(&mut self.state);
-        self.ui.handle_event(cx, event, &mut scope);
+        self.match_event(cx, event);
+        self.ui
+            .handle_event(cx, event, &mut Scope::with_data(&mut self.state));
     }
 }
 
@@ -118,7 +127,12 @@ impl App {
             }
             self.state.image_paths.push(path);
         }
-        self.ui.redraw(cx);
+
+        if self.state.image_paths.is_empty() {
+            self.set_current_image(cx, None);
+        } else {
+            self.set_current_image(cx, Some(0));
+        }
     }
 
     fn set_current_image(&mut self, cx: &mut Cx, image_idx: Option<usize>) {
@@ -135,18 +149,53 @@ impl App {
                 .load_image_dep_by_path(cx, self.placeholder.as_str())
                 .unwrap();
         }
-
         self.ui.redraw(cx);
     }
+
+    pub fn navigate_left(&mut self, cx: &mut Cx) {
+        if let Some(image_idx) = self.state.current_image_idx {
+            if image_idx > 0 {
+                self.set_current_image(cx, Some(image_idx - 1));
+            }
+        }
+    }
+    pub fn navigate_right(&mut self, cx: &mut Cx) {
+        let image_idx = self.state.num_images();
+
+        if image_idx + 1 < self.state.image_paths.len() {
+            self.set_current_image(cx, Some(image_idx + 1));
+        }
+    }
+
 }
 
 impl LiveHook for App {
     fn after_new_from_doc(&mut self, _cx: &mut Cx) {
-        let path = "C:\\Users\\Roy\\RustroverProjects\\betula\\resources";
+        let path = "C:\\Users\\Administrator\\AppData\\Roaming\\youku-app\\local_caches\\v2\\image";
         self.load_image_paths(_cx, path.as_ref());
     }
 }
 
+impl MatchEvent for App {
+    fn handle_actions(&mut self, cx: &mut Cx, actions: &Actions) {
+        if self.ui.button(id!(navigate_left)).clicked(&actions) {
+            self.navigate_left(cx);
+        }
+        if self.ui.button(id!(navigate_right)).clicked(&actions) {
+            self.navigate_right(cx);
+        }
+
+        if let Some(event) =
+            self.ui.view(id!(slideshow.overlay)).key_down(&actions)
+        {
+            match event.key_code {
+                KeyCode::ArrowLeft => self.navigate_left(cx),
+                KeyCode::ArrowRight => self.navigate_right(cx),
+                _ => {}
+            }
+        }
+    }
+}
 #[derive(Live, LiveHook, Widget)]
 pub struct ImageRow {
     #[deref]
