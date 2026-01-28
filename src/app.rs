@@ -1,4 +1,3 @@
-use crate::components::image_item::ImageClickedAction;
 use makepad_widgets::*;
 use std::path::{Path, PathBuf};
 
@@ -151,6 +150,17 @@ live_design! {
 
         ui: <Root> {
             <Window> {
+                show_bg: true,
+
+                window:{
+                    title: "Betula"
+                }
+
+                caption_bar = {
+                     visible: true,
+                    caption_label = { label = { text: "Betula"}}
+                }
+
                 body = <View> {
                     flow: Overlay,
 
@@ -317,15 +327,6 @@ impl MatchEvent for App {
             }
         }
 
-        for action in actions {
-            if let ImageClickedAction::Clicked(image_idx) = action.cast() {
-                self.set_current_image(cx, Some(image_idx));
-                self.ui
-                    .page_flip(id!(page_flip))
-                    .set_active_page(cx, live_id!(slideshow));
-                self.ui.view(id!(slideshow.overlay)).set_key_focus(cx);
-            }
-        }
     }
 }
 #[derive(Live, LiveHook, Widget)]
