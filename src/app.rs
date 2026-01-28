@@ -157,9 +157,10 @@ live_design! {
                 }
 
                 caption_bar = {
-                     visible: true,
-                    caption_label = { label = { text: "Betula"}}
-                }
+                    margin: {top: 2,left: -190},
+                    visible: true,
+                    caption_label = {label = {text: "Betula"}
+                    }}
 
                 body = <View> {
                     flow: Overlay,
