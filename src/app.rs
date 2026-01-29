@@ -23,88 +23,133 @@ live_design! {
                 body = <View> {
                     width: Fill,
                     height: Fill,
-                    flow: Right,
-                    spacing: 10,
-                    margin: 10,
-
-                    <RoundedView> {
+                    flow: Overlay,
+                    draw_bg: { color: #F8F6FF }
+                    content_view = <View> {
                         width: Fill,
-                        height: Fit,
+                        height: Fill,
+                        flow: Right,
+                        spacing: 10,
                         margin: 10,
-                        padding: 5,
-                        draw_bg: {
-                            color: #fff
-                            border_radius: 5.0
-                        }
-                        flow: Down,
+
+                        <RoundedView> {
+                            width: Fill,
+                            height: Fit,
+                            margin: 10,
+                            padding: 5,
+                            draw_bg: {
+                                color: #FFFFFF
+                                border_radius: 8.0
+                            }
+                            flow: Down,
                         title = <H3> {
                             text: "Trello新手指南"
+                            draw_text: { color: #4A3E4E }
                         }
 
-                        card_button = <Button> {
-                            text: "TestButton"
+                            card_button = <Button> {
+                                text: "TestButton"
+                                width: Fill,
+
+                            }
+                          <Button> { text: "TestButton" draw_text: { color: #4A3E4E } }
+                          <Button> { text: "TestButton" draw_text: { color: #4A3E4E } }
+                    }
+                    <RoundedView> {
+                        width: Fill, height: Fit,
+                        flow: Right,
+                        draw_bg: { color: #FFE9F2, border_radius: 8.0 }
+                        <P> { text: "- Shader-based: what does that mean for how things work." draw_text: { color: #5A4660 } }
+                    }
+
+                    <RoundedView> {
+                        width: Fill, height: Fit,
+                        flow: Right,
+                        draw_bg: { color: #E9FFF6, border_radius: 8.0 }
+                        <P> { text: "- Shader-based: what does that mean for how things work." draw_text: { color: #3F5C55 } }
+                    }
+                    }
+                    card_modal = <Modal> {
+                        content: <View> {
                             width: Fill,
-
-                        }
-                          <Button> { text: "TestButton"}
-                          <Button> { text: "TestButton"}
-                    }
-                    <RoundedView> {
-                        width: Fill, height: Fit,
-                        flow: Right,
-                        <P> { text: "- Shader-based: what does that mean for how things work." }
-                    }
-
-                    <RoundedView> {
-                        width: Fill, height: Fit,
-                        flow: Right,
-                        <P> { text: "- Shader-based: what does that mean for how things work." }
-                    }
-                }
-                card_modal = <Modal> {
-                    content: {
-                        full_view = <RoundedView> {
-                            width: 400,
-                            height: 800,
-                            flow: Down,
-                            draw_bg: {
-                                color: #CCC
+                            height: Fill,
+                            flow: Overlay,
+                            align: {x: 0.5, y: 0.5}
+                            scrim = <View> {
+                                width: Fill,
+                                height: Fill,
+                                draw_bg: { color: #F3F4FFCC }
                             }
-                            header_view = <View> {
-                                width: 400,
-                                height: 200,
-                                flow: Right,
-                                show_bg: true
-                                button_view = <View> {
-                                    width: 200,
-                                    height: Fill,
-                                    button = <Button> {
-                                        align: {x: 0.5, y: 0.5}
-                                        width: 50, height: Fill
-                                        text: "Cancel"
-                                    }
+                            card_view = <RoundedView> {
+                                width: 560,
+                                height: 520,
+                                flow: Down,
+                                padding: {top: 16, right: 16, bottom: 16, left: 16}
+                                spacing: 12,
+                                draw_bg: {
+                                    color: #FFFFFFE6
+                                    border_radius: 12.0
                                 }
-                            }
-                            content_view = <View> {
-                                width: 400,
-                                height: 600,
-                                flow: Right,
-                                <View> {
-                                    flow: Down,
-                                    <P> { text: "- Shader-based: what does that mean for how things work." }
-                                    <View> {
+                                header_view = <View> {
+                                    width: Fill,
+                                    height: Fit,
+                                    flow: Right,
+                                    spacing: 12,
+                                    align: {x: 0.0, y: 0.5}
+                                title = <H3> { text: "卡片详情" draw_text: { color: #4A3E4E } }
+                                    header_spacer = <View> { width: Fill, height: Fit }
+                                    button_view = <View> {
+                                        width: Fit,
+                                        height: Fit,
                                         flow: Right,
-                                        <Button> { text: "添加" }
-                                        <Button> { text: "标签" }
-                                        <Button> { text: "日期" }
-                                        <Button> { text: "清单" }
-                                        <Button> { text: "成员" }
-                                    }
-                                    <View> {
-
+                                        spacing: 8,
+                                        cancel_button = <Button> {
+                                            width: 90,
+                                            height: 32,
+                                            text: "Cancel"
+                                        }
                                     }
                                 }
-                                <View> {<P> { text: "- Shader-based: what does that mean for how things work." }}
+                                content_view = <View> {
+                                    width: Fill,
+                                    height: Fill,
+                                    flow: Right,
+                                    spacing: 12,
+                                    body_view = <RoundedView> {
+                                        width: Fill,
+                                        height: Fill,
+                                        flow: Down,
+                                        padding: {top: 12, right: 12, bottom: 12, left: 12}
+                                        spacing: 10,
+                                        draw_bg: {
+                                            color: #FFFDF8
+                                            border_radius: 10.0
+                                        }
+                                        <P> { text: "- Shader-based: what does that mean for how things work." draw_text: { color: #5A4660 } }
+                                        action_row = <View> {
+                                            flow: Right,
+                                            spacing: 6,
+                                            <Button> { text: "添加" draw_text: { color: #4A3E4E } }
+                                            <Button> { text: "标签" draw_text: { color: #4A3E4E } }
+                                            <Button> { text: "日期" draw_text: { color: #4A3E4E } }
+                                            <Button> { text: "清单" draw_text: { color: #4A3E4E } }
+                                            <Button> { text: "成员" draw_text: { color: #4A3E4E } }
+                                        }
+                                        <View> { height: Fill }
+                                    }
+                                    side_view = <RoundedView> {
+                                        width: 180,
+                                        height: Fill,
+                                        flow: Down,
+                                        padding: {top: 12, right: 12, bottom: 12, left: 12}
+                                        spacing: 8,
+                                        draw_bg: {
+                                            color: #F5F9FF
+                                            border_radius: 10.0
+                                        }
+                                        <P> { text: "- Shader-based: what does that mean for how things work." draw_text: { color: #3F4F6A } }
+                                    }
+                                }
                             }
                         }
                     }
@@ -129,7 +174,6 @@ impl AppMain for App {
     }
 }
 
-
 impl LiveRegister for App {
     fn live_register(cx: &mut Cx) {
         makepad_widgets::live_design(cx);
@@ -138,7 +182,6 @@ impl LiveRegister for App {
 
 impl MatchEvent for App {
     fn handle_actions(&mut self, cx: &mut Cx, actions: &Actions) {
-
         if self.ui.button(id!(card_button)).clicked(actions) {
             self.ui.modal(id!(card_modal)).open(cx);
         }
