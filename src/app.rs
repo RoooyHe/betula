@@ -1,7 +1,9 @@
 use makepad_widgets::*;
 
 live_design! {
+    use link::theme::*;
     use link::widgets::*;
+    use crate::markdown::*;
 
     App = {{App}} {
         ui: <Root> {
@@ -24,13 +26,41 @@ live_design! {
                     width: Fill,
                     height: Fill,
                     flow: Overlay,
-                    draw_bg: { color: #F8F6FF }
+                    draw_bg: {
+                        color: #F8F6FF
+                    }
+                    header_view = <View> {
+                        flow: Right
+                        <Button> { text: "View" }
+                        <Button> { text: "Betula" }
+                        <TextInput> {}
+                        <Button> { text: "创建" }
+                        <Button> { text: "意见" }
+                        <Button> { text: "通知" }
+                        <Button> { text: "信息" }
+                        <Button> { text: "账户" }
+                    }
+
+
+                        panel_view = <View> {
+                            <Button> { text: "我的面板" }
+                            <Button> { text: "视图切换" }
+                            <Button> { text: "账户" }
+                            <Button> { text: "自动化" }
+                            <Button> { text: "筛选" }
+                            <Button> { text: "收藏" }
+                            <Button> { text: "变更可见性" }
+                            <Button> { text: "分享" }
+                            <Button> { text: "。。。" }
+                        }
+
                     content_view = <View> {
                         width: Fill,
                         height: Fill,
                         flow: Right,
                         spacing: 10,
                         margin: 10,
+
 
                         <RoundedView> {
                             width: Fill,
@@ -45,29 +75,30 @@ live_design! {
                         title = <H3> {
                             text: "Trello新手指南"
                             draw_text: { color: #4A3E4E }
-                        }
+
+                            }
 
                             card_button = <Button> {
                                 text: "TestButton"
                                 width: Fill,
 
                             }
-                          <Button> { text: "TestButton" draw_text: { color: #4A3E4E } }
-                          <Button> { text: "TestButton" draw_text: { color: #4A3E4E } }
-                    }
-                    <RoundedView> {
-                        width: Fill, height: Fit,
-                        flow: Right,
-                        draw_bg: { color: #FFE9F2, border_radius: 8.0 }
-                        <P> { text: "- Shader-based: what does that mean for how things work." draw_text: { color: #5A4660 } }
-                    }
+                            <Button> { text: "TestButton" draw_text: { color: #4A3E4E } }
+                            <Button> { text: "TestButton" draw_text: { color: #4A3E4E } }
+                        }
+                        <RoundedView> {
+                            width: Fill, height: Fit,
+                            flow: Right,
+                            draw_bg: { color: #FFE9F2, border_radius: 8.0 }
+                            <P> { text: "- Shader-based: what does that mean for how things work." draw_text: { color: #5A4660 } }
+                        }
 
-                    <RoundedView> {
-                        width: Fill, height: Fit,
-                        flow: Right,
-                        draw_bg: { color: #E9FFF6, border_radius: 8.0 }
-                        <P> { text: "- Shader-based: what does that mean for how things work." draw_text: { color: #3F5C55 } }
-                    }
+                        <RoundedView> {
+                            width: Fill, height: Fit,
+                            flow: Right,
+                            draw_bg: { color: #E9FFF6, border_radius: 8.0 }
+                            <P> { text: "- Shader-based: what does that mean for how things work." draw_text: { color: #3F5C55 } }
+                        }
                     }
                     card_modal = <Modal> {
                         content: <View> {
@@ -135,7 +166,25 @@ live_design! {
                                             <Button> { text: "清单" draw_text: { color: #4A3E4E } }
                                             <Button> { text: "成员" draw_text: { color: #4A3E4E } }
                                         }
-                                        <View> { height: Fill }
+                                        MarkdownEditorUI = <View> {
+                                            width: Fill, height: Fill,
+                                            flow: Right,
+                                            editor = <View> {
+                                                width: Fill, height: Fill,
+                                                draw_bg: { color: #f5f5f5 }
+
+                                                editor_input = <TextInput> {
+                                                    width: Fill, height: Fill,
+                                                    draw_text: {
+                                                        text_style: <THEME_FONT_CODE> {}
+                                                    }
+                                                }
+                                            }
+                                            preview = <Markdown> {
+                                                width: Fill, height: Fit,
+                                                draw_bg: { color: #fff }
+                                            }
+                                        }
                                     }
                                     side_view = <RoundedView> {
                                         width: 180,
