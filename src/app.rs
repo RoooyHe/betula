@@ -655,11 +655,9 @@ pub struct App {
 impl AppMain for App {
     fn handle_event(&mut self, cx: &mut Cx, event: &Event) {
         if let Event::Startup = event {
-            self.start_card_fetch();
             self.start_space_fetch();
         }
         if let Event::Signal = event {
-            self.handle_card_signal(cx);
             self.handle_space_signal(cx);
         }
         let actions = cx.capture_actions(|cx| {
