@@ -6,99 +6,9 @@ live_design! {
     use link::theme::*;
     use link::widgets::*;
     use crate::markdown::*;
+    use crate::design::*;
 
-    CardButton = <Button> {
-        text: "TestButton"
-        width: Fill,
-        draw_text: { color: #4A3E4EFF }
-    }
-
-    CardItem = <Button> {
-        width: Fill,
-        height: Fit,
-        padding: {top: 8, right: 8, bottom: 8, left: 8}
-        draw_bg: {
-            color: #FFFFFFFF
-            border_radius: 10.0
-        }
-        draw_text: { text_style: { font_size: 0.0 } } // 隐藏按钮文字
-
-        layout: {
-            flow: Down,
-            spacing: 6,
-        }
-
-        tag_row = <View> {
-            width: Fill,
-            height: Fit,
-            flow: Right,
-            tag = <RoundedView> {
-                width: Fit,
-                height: Fit,
-                padding: {top: 2, right: 6, bottom: 2, left: 6}
-                draw_bg: {
-                    color: #9FE7B4FF
-                    border_radius: 6.0
-                }
-                tag_text = <Label> { text: "非紧急" draw_text: { color: #2E5A45FF } }
-            }
-        }
-        title_text = <Label> { text: "完成代码编辑" draw_text: { color: #3E3342FF } }
-        meta_row = <View> {
-            width: Fill,
-            height: Fit,
-            flow: Right,
-            spacing: 8,
-            date_text = <Label> { text: "2月7日" draw_text: { color: #6A5A72FF } }
-            progress_text = <Label> { text: "0/2" draw_text: { color: #6A5A72FF } }
-        }
-    }
-
-    CardList = <RoundedView> {
-        width: 260,
-        height: Fit,
-        margin: 10,
-        padding: {top: 10, right: 10, bottom: 10, left: 10}
-        draw_bg: {
-            color: #F6E88BFF
-            border_radius: 12.0
-        }
-        flow: Down,
-        spacing: 8,
-        header_row = <View> {
-            width: Fill,
-            height: Fit,
-            flow: Right,
-            spacing: 8,
-            align: {x: 0.0, y: 0.5}
-            title = <H3> {
-                text: "今天"
-                draw_text: { color: #4A3E4EFF }
-            }
-            header_spacer = <View> { width: Fill, height: Fit }
-            <Button> { text: "->" draw_text: { color: #6A5A72FF } }
-            <Button> { text: "..." draw_text: { color: #6A5A72FF } }
-        }
-        card_item_1 = <CardItem> {}
-        card_item_2 = <CardItem> {}
-        card_item_3 = <CardItem> {}
-        divider = <View> {
-            width: Fill,
-            height: 1,
-            draw_bg: { color: #E6D98AFF }
-        }
-        add_row = <View> {
-            width: Fill,
-            height: Fit,
-            flow: Right,
-            spacing: 8,
-            <Button> { text: "+" draw_text: { color: #6A5A72FF } }
-            <Button> { text: "添加卡片" draw_text: { color: #6A5A72FF } }
-            add_spacer = <View> { width: Fill, height: Fit }
-            <Button> { text: "=" draw_text: { color: #6A5A72FF } }
-        }
-    }
-
+    // ============ 主应用 UI ============
     App = {{App}} {
         ui: <Root> {
             <Window> {
@@ -123,6 +33,8 @@ live_design! {
                     draw_bg: {
                         color: #F8F6FFFF
                     }
+
+                    // 顶部导航栏
                     header_view = <View> {
                         width: Fill,
                         height: Fit,
@@ -150,11 +62,24 @@ live_design! {
                             spacing: 10,
                             margin: 10,
 
+                            // 面板工具栏（包含 Space 标签）
                             panel_view = <View> {
                                 width: Fill,
                                 height: Fit,
                                 flow: Right,
                                 spacing: 6,
+                                align: {x: 0.0, y: 0.5}
+
+                                space_tabs = <View> {
+                                    width: Fit,
+                                    height: Fit,
+                                    flow: Right,
+                                    spacing: 4,
+                                    space_item_1 = <SpaceItem> { text: "加载中..." }
+                                }
+
+                                <View> { width: 20, height: Fit }
+
                                 <Button> { text: "我的面板" }
                                 <Button> { text: "视图切换" }
                                 <Button> { text: "账户" }
@@ -166,17 +91,20 @@ live_design! {
                                 <Button> { text: "。。。" }
                             }
 
+                            // 卡片列表区域
                             content_view = <View> {
                                 width: Fill,
                                 height: Fill,
                                 flow: Right,
                                 spacing: 10,
 
-                            card_list_1 = <CardList> {}
-                            card_list_2 = <CardList> {}
-                            card_list_3 = <CardList> {}
+                                card_list_1 = <CardList> {}
+                                card_list_2 = <CardList> {}
+                                card_list_3 = <CardList> {}
                             }
                         }
+
+                        // 卡片详情弹窗
                         card_modal = <Modal> {
                             content: <View> {
                                 width: Fill,
@@ -198,7 +126,7 @@ live_design! {
                                         border_radius: 8.0
                                     }
 
-                                    // 头部区域 - 包含标题和关闭按钮
+                                    // 头部区域
                                     header_section = <View> {
                                         width: Fill,
                                         height: Fit,
@@ -207,7 +135,6 @@ live_design! {
                                         align: {x: 0.0, y: 0.5}
                                         draw_bg: { color: #F4F5F7FF }
 
-                                        // 标题图标
                                         icon_area = <View> {
                                             width: Fit,
                                             height: Fit,
@@ -278,7 +205,6 @@ live_design! {
                                         padding: {top: 0, right: 16, bottom: 16, left: 16}
                                         spacing: 16,
 
-                                        // 左侧主内容区
                                         main_content = <View> {
                                             width: Fill,
                                             height: Fill,
@@ -292,7 +218,6 @@ live_design! {
                                                 flow: Down,
                                                 spacing: 16,
 
-                                                // 成员
                                                 members_row = <View> {
                                                     width: Fill,
                                                     height: Fit,
@@ -332,7 +257,6 @@ live_design! {
                                                     }
                                                 }
 
-                                                // 标签
                                                 labels_row = <View> {
                                                     width: Fill,
                                                     height: Fit,
@@ -586,7 +510,7 @@ live_design! {
                                                         }
 
                                                         <Label> {
-                                                            text: "实现后端接口"
+                                                            text: "实现 API 接口"
                                                             draw_text: {
                                                                 color: #172B4DFF
                                                                 text_style: { font_size: 14 }
@@ -594,167 +518,32 @@ live_design! {
                                                         }
                                                     }
 
-                                                    add_item_button = <Button> {
-                                                        text: "添加项目"
-                                                        width: Fit,
-                                                        padding: {top: 6, right: 12, bottom: 6, left: 12}
-                                                        draw_text: {
-                                                            color: #5E6C84FF
-                                                            text_style: { font_size: 12 }
+                                                    <View> {
+                                                        width: Fill,
+                                                        height: Fit,
+                                                        flow: Right,
+                                                        spacing: 8,
+                                                        align: {x: 0.0, y: 0.5}
+
+                                                        <RoundedView> {
+                                                            width: 16,
+                                                            height: 16,
+                                                            draw_bg: {
+                                                                color: #FFFFFFFF
+                                                                border_color: #DFE1E6FF
+                                                                border_width: 1.5
+                                                                border_radius: 2.0
+                                                            }
                                                         }
-                                                        draw_bg: {
-                                                            color: #091E4208
-                                                            border_radius: 3.0
-                                                        }
-                                                    }
-                                                }
-                                            }
 
-                                            // 活动部分
-                                            activity_section = <View> {
-                                                width: Fill,
-                                                height: Fit,
-                                                flow: Down,
-                                                spacing: 12,
-
-                                                activity_header = <View> {
-                                                    width: Fill,
-                                                    height: Fit,
-                                                    flow: Right,
-                                                    align: {x: 0.0, y: 0.5}
-                                                    spacing: 8,
-
-                                                    <Label> {
-                                                        text: "◐"
-                                                        draw_text: {
-                                                            color: #5E6C84FF
-                                                            text_style: { font_size: 20 }
-                                                        }
-                                                    }
-
-                                                    <Label> {
-                                                        text: "活动"
-                                                        draw_text: {
-                                                            color: #172B4DFF
-                                                            text_style: {
-                                                                font_size: 16
-                                                                font: {path: dep("crate://makepad-widgets/resources/IBMPlexSans-SemiBold.ttf")}
+                                                        <Label> {
+                                                            text: "测试部署"
+                                                            draw_text: {
+                                                                color: #172B4DFF
+                                                                text_style: { font_size: 14 }
                                                             }
                                                         }
                                                     }
-                                                }
-
-                                                comment_input = <RoundedView> {
-                                                    width: Fill,
-                                                    height: Fit,
-                                                    padding: {top: 8, right: 12, bottom: 8, left: 12}
-                                                    margin: {left: 32}
-                                                    draw_bg: {
-                                                        color: #FFFFFFFF
-                                                        border_radius: 3.0
-                                                        border_color: #DFE1E6FF
-                                                        border_width: 1.0
-                                                    }
-
-                                                    <TextInput> {
-                                                        width: Fill,
-                                                        height: 60,
-                                                        text: "编写评论..."
-                                                        draw_text: {
-                                                            text_style: { font_size: 14 }
-                                                            color: #5E6C84FF
-                                                        }
-                                                        draw_bg: { color: #00000000 }
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        // 右侧操作栏
-                                        sidebar = <View> {
-                                            width: 168,
-                                            height: Fit,
-                                            flow: Down,
-                                            spacing: 8,
-
-                                            <Label> {
-                                                text: "添加到卡片"
-                                                draw_text: {
-                                                    color: #5E6C84FF
-                                                    text_style: {
-                                                        font_size: 12
-                                                        font: {path: dep("crate://makepad-widgets/resources/IBMPlexSans-SemiBold.ttf")}
-                                                    }
-                                                }
-                                            }
-
-                                            <Button> {
-                                                width: Fill,
-                                                height: 32,
-                                                text: "成员"
-                                                draw_text: {
-                                                    color: #172B4DFF
-                                                    text_style: { font_size: 14 }
-                                                }
-                                                draw_bg: {
-                                                    color: #091E4214
-                                                    border_radius: 3.0
-                                                }
-                                            }
-
-                                            <Button> {
-                                                width: Fill,
-                                                height: 32,
-                                                text: "标签"
-                                                draw_text: {
-                                                    color: #172B4DFF
-                                                    text_style: { font_size: 14 }
-                                                }
-                                                draw_bg: {
-                                                    color: #091E4214
-                                                    border_radius: 3.0
-                                                }
-                                            }
-
-                                            <Button> {
-                                                width: Fill,
-                                                height: 32,
-                                                text: "清单"
-                                                draw_text: {
-                                                    color: #172B4DFF
-                                                    text_style: { font_size: 14 }
-                                                }
-                                                draw_bg: {
-                                                    color: #091E4214
-                                                    border_radius: 3.0
-                                                }
-                                            }
-
-                                            <Button> {
-                                                width: Fill,
-                                                height: 32,
-                                                text: "日期"
-                                                draw_text: {
-                                                    color: #172B4DFF
-                                                    text_style: { font_size: 14 }
-                                                }
-                                                draw_bg: {
-                                                    color: #091E4214
-                                                    border_radius: 3.0
-                                                }
-                                            }
-
-                                            <Button> {
-                                                width: Fill,
-                                                height: 32,
-                                                text: "附件"
-                                                draw_text: {
-                                                    color: #172B4DFF
-                                                    text_style: { font_size: 14 }
-                                                }
-                                                draw_bg: {
-                                                    color: #091E4214
-                                                    border_radius: 3.0
                                                 }
                                             }
 
@@ -840,6 +629,31 @@ live_design! {
     }
 }
 
+#[derive(Clone, Deserialize)]
+struct CardDto {
+    id: String,
+    title: String,
+    status: bool,
+    #[serde(rename = "endTime")]
+    end_time: Option<String>,
+    description: Option<String>,
+    #[serde(rename = "todoList")]
+    todo_list: Vec<String>,
+    tags: Vec<serde_json::Value>,
+    active: Vec<String>,
+}
+
+#[derive(Clone, Deserialize)]
+struct SpaceDto {
+    id: i64,
+    title: String,
+    user_id: String,
+    canceled: Option<bool>,
+    sort: Option<i32>,
+    color: Option<String>,
+    sort_by: Option<String>,
+}
+
 #[derive(Live, LiveHook)]
 pub struct App {
     #[live]
@@ -848,15 +662,21 @@ pub struct App {
     card_signal: SignalToUI,
     #[rust]
     card_rx: Option<Receiver<Vec<CardDto>>>,
+    #[rust]
+    space_signal: SignalToUI,
+    #[rust]
+    space_rx: Option<Receiver<Vec<SpaceDto>>>,
 }
 
 impl AppMain for App {
     fn handle_event(&mut self, cx: &mut Cx, event: &Event) {
         if let Event::Startup = event {
             self.start_card_fetch();
+            self.start_space_fetch();
         }
         if let Event::Signal = event {
             self.handle_card_signal(cx);
+            self.handle_space_signal(cx);
         }
         let actions = cx.capture_actions(|cx| {
             self.ui.handle_event(cx, event, &mut Scope::empty());
@@ -874,7 +694,6 @@ impl LiveRegister for App {
 impl MatchEvent for App {
     fn handle_actions(&mut self, cx: &mut Cx, actions: &Actions) {
         // 处理三个列表中的卡片点击事件
-        // 直接使用 card_item 作为按钮
         if self.ui.button(id!(card_list_1.card_item_1)).clicked(actions)
             || self.ui.button(id!(card_list_1.card_item_2)).clicked(actions)
             || self.ui.button(id!(card_list_1.card_item_3)).clicked(actions)
@@ -898,20 +717,6 @@ impl MatchEvent for App {
     }
 }
 
-#[derive(Clone, Deserialize)]
-struct CardDto {
-    id: String,
-    title: String,
-    status: bool,
-    #[serde(rename = "endTime")]
-    end_time: Option<String>,
-    description: Option<String>,
-    #[serde(rename = "todoList")]
-    todo_list: Vec<String>,
-    tags: Vec<serde_json::Value>,
-    active: Vec<String>,
-}
-
 impl App {
     fn start_card_fetch(&mut self) {
         if self.card_rx.is_some() {
@@ -921,10 +726,28 @@ impl App {
         let signal = self.card_signal.clone();
         self.card_rx = Some(rx);
         std::thread::spawn(move || {
-            let request = reqwest::blocking::get("http://localhost:8080/api/v1/cards");
+            let request = reqwest::blocking::get("http://localhost:8911/api/v1/cards");
             if let Ok(response) = request {
                 if let Ok(cards) = response.json::<Vec<CardDto>>() {
                     let _ = tx.send(cards);
+                    signal.set();
+                }
+            }
+        });
+    }
+
+    fn start_space_fetch(&mut self) {
+        if self.space_rx.is_some() {
+            return;
+        }
+        let (tx, rx) = std::sync::mpsc::channel();
+        let signal = self.space_signal.clone();
+        self.space_rx = Some(rx);
+        std::thread::spawn(move || {
+            let request = reqwest::blocking::get("http://localhost:8911/api/v1/space/byUserId/1");
+            if let Ok(response) = request {
+                if let Ok(spaces) = response.json::<Vec<SpaceDto>>() {
+                    let _ = tx.send(spaces);
                     signal.set();
                 }
             }
@@ -935,22 +758,45 @@ impl App {
         if !self.card_signal.check_and_clear() {
             return;
         }
-        // 先收集所有数据，避免借用冲突
         let mut all_cards = Vec::new();
         if let Some(rx) = &self.card_rx {
             while let Ok(cards) = rx.try_recv() {
                 all_cards.push(cards);
             }
         }
-        // 然后处理收集到的数据
         for cards in all_cards {
             self.apply_cards(cx, &cards);
         }
     }
 
+    fn handle_space_signal(&mut self, cx: &mut Cx) {
+        if !self.space_signal.check_and_clear() {
+            return;
+        }
+        let mut all_spaces = Vec::new();
+        if let Some(rx) = &self.space_rx {
+            while let Ok(spaces) = rx.try_recv() {
+                all_spaces.push(spaces);
+            }
+        }
+        for spaces in all_spaces {
+            self.apply_spaces(cx, &spaces);
+        }
+    }
+
+    fn apply_spaces(&mut self, cx: &mut Cx, spaces: &[SpaceDto]) {
+        for (index, space) in spaces.iter().enumerate() {
+            if index == 0 {
+                self.ui.button(id!(space_tabs.space_item_1)).set_text(cx, &space.title);
+                println!("Loaded space: {} (id={})", space.title, space.id);
+            }
+        }
+        if spaces.is_empty() {
+            self.ui.button(id!(space_tabs.space_item_1)).set_text(cx, "暂无空间");
+        }
+    }
+
     fn apply_cards(&mut self, cx: &mut Cx, cards: &[CardDto]) {
-        // 可以根据实际需求分配卡片到不同列表
-        // 这里简单地将所有卡片应用到每个列表
         self.apply_cards_to_list(cx, id!(card_list_1), cards);
         self.apply_cards_to_list(cx, id!(card_list_2), cards);
         self.apply_cards_to_list(cx, id!(card_list_3), cards);
@@ -961,7 +807,6 @@ impl App {
 
         for (index, item_id) in items.iter().enumerate() {
             if let Some(card) = cards.get(index) {
-                // 构建完整的 ID 路径来设置每个卡片
                 self.set_card_item(cx, list_id[0], item_id[0], card);
             }
         }
@@ -987,19 +832,17 @@ impl App {
             format!("0/{}", total)
         };
 
-        // 使用完整的 ID 路径访问嵌套组件
-        // CardItem 现在是 Button，所以路径是: card_list_X.card_item_X.tag_row.tag.tag_text
         self.ui.label(&[list_id, item_id, id!(tag_row)[0], id!(tag)[0], id!(tag_text)[0]])
-            .set_text(cx,tag_text);
+            .set_text(cx, tag_text);
 
         self.ui.label(&[list_id, item_id, id!(title_text)[0]])
-            .set_text(cx,&card.title);
+            .set_text(cx, &card.title);
 
         self.ui.label(&[list_id, item_id, id!(meta_row)[0], id!(date_text)[0]])
-            .set_text(cx,date_text);
+            .set_text(cx, date_text);
 
         self.ui.label(&[list_id, item_id, id!(meta_row)[0], id!(progress_text)[0]])
-            .set_text(cx,&progress_text);
+            .set_text(cx, &progress_text);
     }
 }
 
