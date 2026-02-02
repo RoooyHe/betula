@@ -5,13 +5,6 @@ live_design! {
     use link::widgets::*;
     use crate::markdown::*;
 
-    // ============ 基础按钮组件 ============
-    pub CardButton = <Button> {
-        text: "TestButton"
-        width: Fill,
-        draw_text: { color: #4A3E4EFF }
-    }
-
     // ============ 卡片项组件 ============
     pub CardItem = <Button> {
         width: Fill,
@@ -97,38 +90,6 @@ live_design! {
             <Button> { text: "添加卡片" draw_text: { color: #6A5A72FF } }
             add_spacer = <View> { width: Fill, height: Fit }
             <Button> { text: "=" draw_text: { color: #6A5A72FF } }
-        }
-    }
-
-    // ============ Space 组件 ============
-    pub SpaceItem = <Button> {
-        width: Fit,
-        height: Fit,
-        padding: {top: 6, right: 12, bottom: 6, left: 12}
-        draw_bg: {
-            color: #FFFFFFFF
-            border_radius: 6.0
-        }
-        draw_text: {
-            text_style: { font_size: 14 }
-            color: #4A3E4EFF
-        }
-    }
-
-    pub SpaceTab = <RoundedView> {
-        width: Fit,
-        height: Fit,
-        padding: {top: 4, right: 8, bottom: 4, left: 8}
-        draw_bg: {
-            color: #E8EDF3FF
-            border_radius: 6.0
-        }
-        space_label = <Label> {
-            text: "空间"
-            draw_text: {
-                text_style: { font_size: 14 }
-                color: #5E6C84FF
-            }
         }
     }
 }

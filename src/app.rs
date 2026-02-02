@@ -630,20 +630,6 @@ live_design! {
 }
 
 #[derive(Clone, Deserialize)]
-struct CardDto {
-    id: String,
-    title: String,
-    status: bool,
-    #[serde(rename = "endTime")]
-    end_time: Option<String>,
-    description: Option<String>,
-    #[serde(rename = "todoList")]
-    todo_list: Vec<String>,
-    tags: Vec<serde_json::Value>,
-    active: Vec<String>,
-}
-
-#[derive(Clone, Deserialize)]
 struct SpaceDto {
     id: i64,
     title: String,
@@ -660,8 +646,6 @@ pub struct App {
     ui: WidgetRef,
     #[rust]
     card_signal: SignalToUI,
-    #[rust]
-    card_rx: Option<Receiver<Vec<CardDto>>>,
     #[rust]
     space_signal: SignalToUI,
     #[rust]
@@ -694,15 +678,42 @@ impl LiveRegister for App {
 impl MatchEvent for App {
     fn handle_actions(&mut self, cx: &mut Cx, actions: &Actions) {
         // 处理三个列表中的卡片点击事件
-        if self.ui.button(id!(card_list_1.card_item_1)).clicked(actions)
-            || self.ui.button(id!(card_list_1.card_item_2)).clicked(actions)
-            || self.ui.button(id!(card_list_1.card_item_3)).clicked(actions)
-            || self.ui.button(id!(card_list_2.card_item_1)).clicked(actions)
-            || self.ui.button(id!(card_list_2.card_item_2)).clicked(actions)
-            || self.ui.button(id!(card_list_2.card_item_3)).clicked(actions)
-            || self.ui.button(id!(card_list_3.card_item_1)).clicked(actions)
-            || self.ui.button(id!(card_list_3.card_item_2)).clicked(actions)
-            || self.ui.button(id!(card_list_3.card_item_3)).clicked(actions)
+        if self
+            .ui
+            .button(id!(card_list_1.card_item_1))
+            .clicked(actions)
+            || self
+                .ui
+                .button(id!(card_list_1.card_item_2))
+                .clicked(actions)
+            || self
+                .ui
+                .button(id!(card_list_1.card_item_3))
+                .clicked(actions)
+            || self
+                .ui
+                .button(id!(card_list_2.card_item_1))
+                .clicked(actions)
+            || self
+                .ui
+                .button(id!(card_list_2.card_item_2))
+                .clicked(actions)
+            || self
+                .ui
+                .button(id!(card_list_2.card_item_3))
+                .clicked(actions)
+            || self
+                .ui
+                .button(id!(card_list_3.card_item_1))
+                .clicked(actions)
+            || self
+                .ui
+                .button(id!(card_list_3.card_item_2))
+                .clicked(actions)
+            || self
+                .ui
+                .button(id!(card_list_3.card_item_3))
+                .clicked(actions)
         {
             println!("Card clicked! Opening modal...");
             self.ui.modal(id!(card_modal)).open(cx);
@@ -710,7 +721,8 @@ impl MatchEvent for App {
 
         // 关闭按钮和归档按钮都可以关闭弹窗
         if self.ui.button(id!(close_button)).clicked(actions)
-            || self.ui.button(id!(cancel_button)).clicked(actions) {
+            || self.ui.button(id!(cancel_button)).clicked(actions)
+        {
             println!("Closing modal...");
             self.ui.modal(id!(card_modal)).close(cx);
         }
@@ -718,24 +730,6 @@ impl MatchEvent for App {
 }
 
 impl App {
-    fn start_card_fetch(&mut self) {
-        if self.card_rx.is_some() {
-            return;
-        }
-        let (tx, rx) = std::sync::mpsc::channel();
-        let signal = self.card_signal.clone();
-        self.card_rx = Some(rx);
-        std::thread::spawn(move || {
-            let request = reqwest::blocking::get("http://localhost:8911/api/v1/cards");
-            if let Ok(response) = request {
-                if let Ok(cards) = response.json::<Vec<CardDto>>() {
-                    let _ = tx.send(cards);
-                    signal.set();
-                }
-            }
-        });
-    }
-
     fn start_space_fetch(&mut self) {
         if self.space_rx.is_some() {
             return;
@@ -752,21 +746,6 @@ impl App {
                 }
             }
         });
-    }
-
-    fn handle_card_signal(&mut self, cx: &mut Cx) {
-        if !self.card_signal.check_and_clear() {
-            return;
-        }
-        let mut all_cards = Vec::new();
-        if let Some(rx) = &self.card_rx {
-            while let Ok(cards) = rx.try_recv() {
-                all_cards.push(cards);
-            }
-        }
-        for cards in all_cards {
-            self.apply_cards(cx, &cards);
-        }
     }
 
     fn handle_space_signal(&mut self, cx: &mut Cx) {
@@ -787,62 +766,17 @@ impl App {
     fn apply_spaces(&mut self, cx: &mut Cx, spaces: &[SpaceDto]) {
         for (index, space) in spaces.iter().enumerate() {
             if index == 0 {
-                self.ui.button(id!(space_tabs.space_item_1)).set_text(cx, &space.title);
+                self.ui
+                    .button(id!(space_tabs.space_item_1))
+                    .set_text(cx, &space.title);
                 println!("Loaded space: {} (id={})", space.title, space.id);
             }
         }
         if spaces.is_empty() {
-            self.ui.button(id!(space_tabs.space_item_1)).set_text(cx, "暂无空间");
+            self.ui
+                .button(id!(space_tabs.space_item_1))
+                .set_text(cx, "暂无空间");
         }
-    }
-
-    fn apply_cards(&mut self, cx: &mut Cx, cards: &[CardDto]) {
-        self.apply_cards_to_list(cx, id!(card_list_1), cards);
-        self.apply_cards_to_list(cx, id!(card_list_2), cards);
-        self.apply_cards_to_list(cx, id!(card_list_3), cards);
-    }
-
-    fn apply_cards_to_list(&mut self, cx: &mut Cx, list_id: &[LiveId; 1], cards: &[CardDto]) {
-        let items = [id!(card_item_1), id!(card_item_2), id!(card_item_3)];
-
-        for (index, item_id) in items.iter().enumerate() {
-            if let Some(card) = cards.get(index) {
-                self.set_card_item(cx, list_id[0], item_id[0], card);
-            }
-        }
-    }
-
-    fn set_card_item(&mut self, cx: &mut Cx, list_id: LiveId, item_id: LiveId, card: &CardDto) {
-        let tag_text = if card.status {
-            "已完成"
-        } else {
-            "进行中"
-        };
-
-        let date_text = card
-            .end_time
-            .as_deref()
-            .and_then(|value| value.split('T').next())
-            .unwrap_or("-");
-
-        let total = card.todo_list.len();
-        let progress_text = if card.status {
-            format!("{}/{}", total, total)
-        } else {
-            format!("0/{}", total)
-        };
-
-        self.ui.label(&[list_id, item_id, id!(tag_row)[0], id!(tag)[0], id!(tag_text)[0]])
-            .set_text(cx, tag_text);
-
-        self.ui.label(&[list_id, item_id, id!(title_text)[0]])
-            .set_text(cx, &card.title);
-
-        self.ui.label(&[list_id, item_id, id!(meta_row)[0], id!(date_text)[0]])
-            .set_text(cx, date_text);
-
-        self.ui.label(&[list_id, item_id, id!(meta_row)[0], id!(progress_text)[0]])
-            .set_text(cx, &progress_text);
     }
 }
 
