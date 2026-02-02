@@ -8,7 +8,6 @@ live_design! {
     use crate::markdown::*;
     use crate::design::*;
 
-    // ============ 主应用 UI ============
     App = {{App}} {
         ui: <Root> {
             <Window> {
@@ -721,7 +720,6 @@ impl MatchEvent for App {
         if self.ui.button(id!(close_button)).clicked(actions)
             || self.ui.button(id!(cancel_button)).clicked(actions)
         {
-            println!("Closing modal...");
             self.ui.modal(id!(card_modal)).close(cx);
         }
     }
