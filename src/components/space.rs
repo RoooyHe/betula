@@ -73,13 +73,19 @@ impl Widget for Space {
     fn draw_walk(&mut self, cx: &mut Cx2d, scope: &mut Scope, walk: Walk) -> DrawStep {
         while let Some(item) = self.view.draw_walk(cx, scope, walk).step() {
             if let Some(mut list) = item.as_portal_list().borrow_mut() {
-                let space_count = self.spaces_data.len().max(1);
+                // 使用真实长度（不要强制至少为 1）
+                let space_count = self.spaces_data.len();
                 list.set_item_range(cx, 0, space_count);
                 while let Some(row_idx) = list.next_visible_item(cx) {
                     let row = list.item(cx, row_idx, live_id!(CardList));
-                    // Update title from data
-                    if let Some(space) = self.spaces_data.get(row_idx) {
-                        row.view(id!(header_row.title)).set_text(cx, &space.title);
+                    // Update title from data（只有在索引有效的时候更新）
+                    if row_idx < self.spaces_data.len() {
+                        if let Some(space) = self.spaces_data.get(row_idx) {
+                            row.view(id!(header_row.title)).set_text(cx, &space.title);
+                        }
+                    } else {
+                        // 索引超范围，清空 header 避免残留
+                        row.view(id!(header_row.title)).set_text(cx, "");
                     }
                     row.draw_all(cx, scope);
                 }
@@ -148,5 +154,8 @@ impl Space {
                 .button(id!(space_tabs.space_item_1))
                 .set_text(cx, "暂无空间");
         }
+
+        // 调试日志，便于观察接收到的数据量
+        println!("apply_spaces: received {} spaces", self.spaces_data.len());
     }
 }
