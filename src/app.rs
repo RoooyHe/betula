@@ -1,6 +1,6 @@
 use makepad_widgets::*;
 use std::sync::mpsc::Receiver;
-use crate::components::space::SpaceDto;
+use crate::components::space::{SpaceDto, get_spaces_data};
 
 live_design! {
     use link::theme::*;
@@ -54,7 +54,7 @@ live_design! {
                     main_view = <View> {
                         width: Fill,
                         height: Fill,
-                        flow: Overlay,
+                        flow: Down,
                         content_row = <View> {
                             width: Fill,
                             height: Fill,
@@ -109,9 +109,6 @@ pub struct App {
 
     #[rust]
     space_rx: Option<Receiver<Vec<SpaceDto>>>,
-
-    #[rust]
-    spaces_data: Vec<SpaceDto>,
 }
 
 impl App {
@@ -137,29 +134,33 @@ impl App {
         if !self.space_signal.check_and_clear() {
             return;
         }
-        let mut all_spaces = Vec::new();
+        // 收集所有待处理的空间数据
+        let mut spaces_list = Vec::new();
         if let Some(rx) = &self.space_rx {
             while let Ok(spaces) = rx.try_recv() {
-                all_spaces.push(spaces);
+                spaces_list.push(spaces);
             }
         }
-        for spaces in all_spaces {
+        // 写入共享状态
+        let shared_data = get_spaces_data();
+        for spaces in spaces_list {
+            *shared_data.lock().unwrap() = spaces.clone();
             self.apply_spaces(cx, &spaces);
         }
     }
 
     fn apply_spaces(&mut self, cx: &mut Cx, spaces: &[SpaceDto]) {
-        self.spaces_data = spaces.to_vec();
+        // 触发重新渲染
+        cx.redraw_all();
         
-        // Update first space title directly
-        if let Some(space) = spaces.first() {
-            self.ui.view(id!(space.card_list.header_row.title)).set_text(cx, &space.title);
-        }
         if spaces.is_empty() {
+            // 没有空间时更新第一个 CardList 的标题
             self.ui
-                .button(id!(space_tabs.space_item_1))
+                .view(id!(space))
+                .label(id!(header_row.title))
                 .set_text(cx, "暂无空间");
         }
+        println!("apply_spaces: received {} spaces", spaces.len());
     }
 }
 

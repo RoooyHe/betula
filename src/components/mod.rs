@@ -6,8 +6,6 @@ mod card_modal;
 mod card_tag;
 pub mod space;
 
-pub use space::SpaceDto;
-
 pub fn live_design(cx: &mut Cx) {
     card_item::live_design(cx);
     card_list::live_design(cx);

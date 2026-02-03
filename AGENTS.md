@@ -2,79 +2,117 @@
 
 ## 项目概述
 
-这是一个包含多个子项目的工作空间，主要由以下部分组成：
-
-1. **Betula** (`./`) - 基于 Makepad Framework 的 Kanban 看板管理 UI 应用
-2. **Kankan** (`./kankan/`) - 基于 Spring Boot 的看板管理后端服务
-3. **Makepad** (`./makepad/`) - 完整的 Rust UI 框架仓库（子模块）
+这是一个基于 Makepad Framework 的 Kanban 看板管理应用，包含 Rust 前端和 Spring Boot 后端。
 
 ## 技术栈
 
 | 子项目 | 技术栈 |
 |--------|--------|
-| **Betula** | Rust 2024 + Makepad (Rust UI 框架) |
-| **Kankan** | Java 25 + Spring Boot 4.0.2 + JPA + H2 + Lombok + MapStruct |
-| **Makepad** | Rust + cargo-makepad (跨平台 UI 构建) |
+| **Betula** | Rust 2024 + Makepad (Rust UI 框架) + reqwest |
+| **Kankan** | Java 25 + Spring Boot 4.0.2 + JPA + H2 + Lombok |
 | **构建工具** | Cargo (Rust), Maven (Java) |
-| **目标平台** | Windows (win32), 支持 native 和 Web (wasm) |
+| **目标平台** | Windows (win32) |
 
 ## 目录结构
 
 ```
 betula/
 ├── src/                  # Betula 主应用代码
-│   ├── main.rs          # 程序入口，调用 betula::app::app_main()
-│   ├── app.rs           # 应用主逻辑和 UI 定义 (~850 行)
-│   ├── design.rs        # UI 设计/样式定义
-│   └── lib.rs           # 库定义
-├── resources/            # 静态资源文件
-│   ├── left_arrow.svg   # 左箭头图标
-│   ├── looking_glass.svg # 搜索图标
-│   ├── placeholder.png  # 占位图
-│   └── right_arrow.svg  # 右箭头图标
+│   ├── main.rs          # 程序入口
+│   ├── app.rs           # 应用主逻辑和 UI 定义
+│   ├── lib.rs           # 库定义
+│   └── components/      # UI 组件
+│       ├── mod.rs       # 组件模块导出
+│       ├── space.rs     # 空间组件 (横向列表)
+│       ├── card_list.rs # 卡片列表组件
+│       ├── card_item.rs # 卡片项组件
+│       ├── card_tag.rs  # 标签组件
+│       └── card_modal.rs # 卡片弹窗组件
 ├── kankan/               # Spring Boot 后端服务
 │   ├── src/main/
 │   │   ├── java/com/roy/kankan/
-│   │   │   ├── KankanApplication.java    # Spring Boot 入口
-│   │   │   ├── command/                  # 命令模式实现
-│   │   │   │   └── CreateTagCommand.java # 创建标签命令
-│   │   │   ├── controller/               # REST API 控制器
-│   │   │   │   ├── ActiveController.java
-│   │   │   │   ├── CardController.java
-│   │   │   │   ├── SpaceController.java
-│   │   │   │   ├── TagController.java
-│   │   │   │   └── TodoController.java
-│   │   │   ├── entity/                   # JPA 实体类
-│   │   │   │   ├── ActiveEntity.java
-│   │   │   │   ├── CardEntity.java
-│   │   │   │   ├── SpaceEntity.java
-│   │   │   │   ├── TagEntity.java
-│   │   │   │   └── TodoEntity.java
-│   │   │   ├── repository/               # 数据访问层
-│   │   │   │   ├── ActiveRepository.java
-│   │   │   │   ├── CardRepository.java
-│   │   │   │   ├── SpaceRepository.java
-│   │   │   │   ├── TagRepository.java
-│   │   │   │   └── TodoRepository.java
-│   │   │   └── convert/                  # DTO 转换
-│   │   │       └── TagConvert.java
+│   │   │   ├── controller/
+│   │   │   │   ├── SpaceController.java    # 空间 API
+│   │   │   │   ├── CardController.java     # 卡片 API
+│   │   │   │   ├── TagController.java      # 标签 API
+│   │   │   │   └── ...
+│   │   │   ├── entity/
+│   │   │   ├── repository/
+│   │   │   └── ...
 │   │   └── resources/
-│   │       ├── application.properties    # 服务配置
-│   │       ├── static/                   # 静态资源
-│   │       └── templates/                # 模板文件
-│   ├── data/                   # H2 数据库文件
-│   ├── pom.xml                 # Maven 配置
-│   └── target/                 # 构建输出
-├── makepad/                    # Makepad UI 框架仓库 (子模块)
-│   ├── audio_graph/            # 音频处理模块
-│   ├── code_editor/            # 代码编辑器组件
-│   ├── draw/draw2/             # 2D/3D 绘图模块
-│   ├── examples/               # 示例应用
-│   ├── libs/                   # 基础库
-│   ├── platform/               # 平台相关代码
-│   ├── widgets/                # UI 组件库
-│   └── tools/                  # 构建工具
-└── Cargo.toml                  # Rust 工作空间配置
+│   │       └── application.properties
+│   └── data/             # H2 数据库文件
+├── Cargo.toml            # Rust 配置
+└── README.md
+```
+
+## API 接口
+
+### 获取用户空间列表
+
+```
+GET http://localhost:8911/api/v1/space/byUserId/{userId}
+```
+
+**响应数据结构：**
+
+```json
+[
+  {
+    "id": 1,
+    "title": "Trello 新手指南",
+    "userId": "1",
+    "canceled": false,
+    "sort": 1,
+    "color": "",
+    "sortBy": "",
+    "cards": [
+      {
+        "id": 2,
+        "title": "完成代码编辑",
+        "description": null,
+        "status": false,
+        "endTime": null,
+        "tags": [
+          { "id": 1, "title": "非紧急", "color": null }
+        ]
+      }
+    ]
+  }
+]
+```
+
+**DTO 定义 (src/components/space.rs):**
+
+```rust
+#[derive(Clone, Deserialize)]
+pub struct TagDto {
+    pub id: i64,
+    pub title: String,
+    pub color: Option<String>,
+}
+
+#[derive(Clone, Deserialize)]
+pub struct CardDto {
+    pub id: i64,
+    pub title: String,
+    pub description: Option<String>,
+    pub status: Option<bool>,
+    pub end_time: Option<String>,
+    pub tags: Vec<TagDto>,
+}
+
+#[derive(Clone, Deserialize)]
+pub struct SpaceDto {
+    pub id: i64,
+    pub title: String,
+    pub user_id: String,
+    pub canceled: Option<bool>,
+    pub sort: Option<i32>,
+    pub color: Option<String>,
+    pub sort_by: Option<String>,
+    pub cards: Vec<CardDto>,
+}
 ```
 
 ## 构建和运行
@@ -87,6 +125,9 @@ cargo run
 
 # Release 构建
 cargo run --release
+
+# 检查依赖
+cargo check
 ```
 
 ### Kankan (Spring Boot 后端服务)
@@ -94,52 +135,76 @@ cargo run --release
 ```powershell
 cd kankan
 
-# 运行服务 (默认端口 8911)
+# 运行服务 (端口 8911)
 .\mvnw.cmd spring-boot:run
 
-# 或打包后运行
+# 打包
 .\mvnw.cmd package
-java -jar target/kankan-0.0.1-SNAPSHOT.jar
 ```
 
-**Kankan 服务配置** (端口 8911):
-- REST API: `/api/*` (需查看各 Controller 定义)
-- H2 数据库控制台: `http://localhost:8911/h2-console`
+**后端服务配置:**
+- API 基础路径: `http://localhost:8911/api/v1`
+- H2 控制台: `http://localhost:8911/h2-console`
 - 数据库: `jdbc:h2:file:./data/kankan`
 
-### Makepad 示例
+## 组件架构
 
-```powershell
-cd makepad
+### Space (space.rs)
+- 顶层容器，水平排列多个 CardList
+- 启动时调用 `start_space_fetch()` 获取空间数据
+- 使用 `PortalList` 实现动态空间列表
 
-# 运行 Makepad Studio
-cargo run -p makepad-studio --release
+### CardList (card_list.rs)
+- 单个空间列，包含标题和卡片列表
+- 标题显示空间名称
+- 使用 `PortalList` 渲染 CardItem
 
-# 运行特定示例
-cargo run -p makepad-example-simple --release
+### CardItem (card_item.rs)
+- 单个卡片项
+- 显示卡片标题和标签
+- 使用 `PortalList` 渲染 CardTag
+
+### CardTag (card_tag.rs)
+- 卡片标签组件
+- 显示标签名称
+
+### 数据流
+
+```
+App (handle_event Startup)
+    ↓
+start_space_fetch() (在新线程中请求 API)
+    ↓
+handle_space_signal() (收到 Signal)
+    ↓
+apply_spaces() (更新 spaces_data)
+    ↓
+draw_walk() (渲染时从 spaces_data 读取数据)
 ```
 
-## Betula 项目依赖
+## 关键文件
 
-```toml
-[dependencies]
-makepad-widgets = "1.0.0"
-reqwest = { version = "0.12", features = ["blocking", "json"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-```
+| 文件 | 说明 |
+|------|------|
+| `src/app.rs` | 主应用入口，包含 UI 定义和事件处理 |
+| `src/components/space.rs` | 空间组件 + DTO 定义 + API 调用 |
+| `src/components/card_list.rs` | 卡片列表组件 |
+| `src/components/card_item.rs` | 卡片项组件 |
+| `src/components/card_tag.rs` | 标签组件 |
+| `src/components/mod.rs` | 组件模块导出 |
 
 ## 开发规范
 
-### Rust / Betula
+### Rust / Makepad
 
-- 使用 Rust 2024 Edition
-- 使用 `live_design!` 宏定义 Makepad UI
-- 遵循 Makepad 的事件驱动架构
-- 使用 `makepad-widgets` 组件库
-- 事件处理使用 `#[live]` 属性和 `#[derive(Live)]`
+- 使用 `live_design!` 宏定义 UI DSL
+- 遵循 Makepad 事件驱动架构
+- 使用 `#[derive(Live, LiveHook, Widget)]` 定义组件
+- 使用 `#[rust]` 标记 Rust 字段
+- API 调用在独立线程中使用 `reqwest::blocking::get`
+- 信号通知: `SignalToUI` + `Event::Signal`
 
-### UI 定义 (app.rs 示例)
+### UI 定义示例
 
 ```rust
 live_design! {
@@ -156,70 +221,25 @@ live_design! {
 }
 ```
 
-### Java / Kankan
+### 事件处理
 
-- 使用 Java 25
-- 使用 Lombok 减少样板代码
-- 使用 MapStruct 进行实体与 DTO 转换
-- 使用 JPA/Hibernate 进行数据持久化
-- 遵循 Spring Boot 约定优于配置原则
-- 使用命令模式解耦业务逻辑 (command/ 目录)
-
-## 关键文件说明
-
-| 文件 | 说明 |
-|------|------|
-| `src/app.rs` | Betula 主应用，包含完整的 UI DSL 定义 (~850 行) |
-| `src/main.rs` | Betula 入口文件，调用 `betula::app::app_main()` |
-| `src/design.rs` | UI 设计/样式定义 |
-| `kankan/pom.xml` | Kankan Maven 配置 (Spring Boot 4.0.2) |
-| `kankan/src/main/java/com/roy/kankan/KankanApplication.java` | Kankan Spring Boot 入口 |
-| `kankan/src/main/resources/application.properties` | Kankan 服务配置 |
-| `kankan/src/main/java/com/roy/kankan/command/CreateTagCommand.java` | 命令模式示例 |
-| `makepad/README.md` | Makepad 框架完整文档 |
-
-## 常用命令
-
-### Rust 命令
-
-```powershell
-# 检查依赖
-cargo check
-
-# 构建所有目标
-cargo build --all-targets
-
-# 运行测试
-cargo test
-
-# 更新依赖
-cargo update
-```
-
-### Java/Maven 命令
-
-```powershell
-cd kankan
-
-# 运行服务
-.\mvnw.cmd spring-boot:run
-
-# 编译打包
-.\mvnw.cmd package
-
-# 运行测试
-.\mvnw.cmd test
-
-# 清理构建
-.\mvnw.cmd clean
+```rust
+impl AppMain for App {
+    fn handle_event(&mut self, cx: &mut Cx, event: &Event) {
+        if let Event::Startup = event {
+            self.start_space_fetch();
+        }
+        if let Event::Signal = event {
+            self.handle_space_signal(cx);
+        }
+    }
+}
 ```
 
 ## 注意事项
 
 1. **Windows 环境**: 项目在 Windows 10+ 上开发测试
 2. **Java 版本**: Kankan 需要 JDK 25+
-3. **Makepad 依赖**: 需要安装 `cargo-makepad` 工具进行 wasm/移动端构建
-4. **Web 构建**: Web 构建需要 nightly Rust 工具链
-5. **数据库**: Kankan 使用 H2 文件数据库，首次运行会自动创建表结构
-6. **H2 控制台**: 开发环境可访问 `/h2-console` 进行数据库管理
-7. **API 端口**: Kankan 后端服务默认运行在端口 8911，Betula 前端需连接此端口
+3. **API 端口**: Kankan 后端服务运行在端口 8911
+4. **线程安全**: API 调用在独立线程中执行，通过 channel 通信
+5. **数据传递**: 使用 `spaces_data` 字段存储 API 返回数据
