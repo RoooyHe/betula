@@ -1,97 +1,49 @@
+use chrono;
 use makepad_widgets::*;
 use std::sync::mpsc::Receiver;
-use crate::components::space::{SpaceDto, get_spaces_data};
+
+use crate::components::space::*;
 
 live_design! {
     use link::theme::*;
     use link::widgets::*;
-
-    use crate::components::card_list::*;
-    use crate::components::card_modal::*;
-    use crate::components::space::*;
+    use crate::components::space::SpaceList;
 
     App = {{App}} {
         ui: <Root> {
             <Window> {
                 window: {
-                    title: "Betula"
-                },
-                caption_bar = {
-                    visible: true,
-                    margin: {
-                        left: -500
-                    },
-                    caption_label = {
-                        label = {
-                            text: "Betula"
-                        }
-                    },
+                    title: "Betula - Kanban Board"
                 },
                 body = <View> {
                     width: Fill,
                     height: Fill,
                     flow: Down,
-                    draw_bg: {
-                        color: #F8F6FFFF
-                    }
+                    padding: 20,
+                    spacing: 20,
 
-                    header_view = <View> {
+                    <View> {
                         width: Fill,
                         height: Fit,
-                        flow: Right
-                        spacing: 8,
-                        padding: {top: 8, right: 12, bottom: 8, left: 12}
-                        <Button> { text: "View" }
-                        <Button> { text: "Betula" }
-                        <TextInput> { width: 220 }
-                        <Button> { text: "创建" }
-                        <Button> { text: "意见" }
-                        <Button> { text: "通知" }
-                        <Button> { text: "信息" }
-                        <Button> { text: "账户" }
+                        flow: Right,
+                        spacing: 20,
                     }
 
-                    main_view = <View> {
+                    <ScrollXYView> {
                         width: Fill,
                         height: Fill,
-                        flow: Down,
-                        content_row = <View> {
-                            width: Fill,
-                            height: Fill,
-                            flow: Down,
-                            spacing: 10,
-                            margin: 10,
-
-                            panel_view = <View> {
-                                width: Fill,
-                                height: Fit,
-                                flow: Right,
-                                spacing: 6,
-                                align: {x: 0.0, y: 0.5}
-
-                                space_tabs = <View> {
-                                    width: Fit,
-                                    height: Fit,
-                                    flow: Right,
-                                    spacing: 4,
-                                }
-
-                                <View> { width: 20, height: Fit }
-
-                                <Button> { text: "我的面板" }
-                                <Button> { text: "视图切换" }
-                                <Button> { text: "账户" }
-                                <Button> { text: "自动化" }
-                                <Button> { text: "筛选" }
-                                <Button> { text: "收藏" }
-                                <Button> { text: "变更可见性" }
-                                <Button> { text: "分享" }
-                                <Button> { text: "。。。" }
-                            }
-
-                            space = <Space> {}
+                        scroll_bars: <ScrollBars> {
+                            show_scroll_x: true,
+                            show_scroll_y: true,
                         }
-                        card_modal = <CardModal> {}
+
+                        <SpaceList> {}
+
+                        create_button = <Button> {
+                            text: "创建空间",
+                            width: 120,
+                            height: 40,
+                        }
                     }
                 }
             }
@@ -99,110 +51,444 @@ live_design! {
     }
 }
 
-#[derive(Live, LiveHook)]
-pub struct App {
+#[derive(Live)]
+struct App {
     #[live]
     ui: WidgetRef,
-
     #[rust]
-    space_signal: SignalToUI,
-
-    #[rust]
-    space_rx: Option<Receiver<Vec<SpaceDto>>>,
+    state: State,
 }
 
 impl App {
     fn start_space_fetch(&mut self) {
-        if self.space_rx.is_some() {
-            return;
-        }
-        
+        // 重置接收器以允许重复调用
+        self.state.space_rx = None;
+
         let (tx, rx) = std::sync::mpsc::channel();
-        let signal = self.space_signal.clone();
-        self.space_rx = Some(rx);
-        
+        let signal = self.state.space_signal.clone();
+        self.state.space_rx = Some(rx);
+
         std::thread::spawn(move || {
             let request = reqwest::blocking::get("http://localhost:8911/api/v1/space/byUserId/1");
             match request {
-                Ok(response) => {
-                    match response.json::<Vec<SpaceDto>>() {
-                        Ok(spaces) => {
-                            let _ = tx.send(spaces);
-                            signal.set();
-                        }
-                        Err(e) => {
-                            println!("Failed to parse JSON: {}", e);
-                        }
+                Ok(response) => match response.json::<Vec<SpaceDto>>() {
+                    Ok(spaces) => {
+                        let _ = tx.send(spaces);
+                        signal.set();
                     }
-                }
+                    Err(e) => {
+                        println!("JSON 解析失败: {}", e);
+                    }
+                },
                 Err(e) => {
-                    println!("Failed to fetch from API: {}", e);
+                    println!("API 请求失败: {}", e);
                 }
             }
         });
     }
 
     fn handle_space_signal(&mut self, cx: &mut Cx) {
-        if !self.space_signal.check_and_clear() {
+        if !self.state.space_signal.check_and_clear() {
             return;
         }
-        
-        // 收集所有待处理的空间数据
-        let mut spaces_list = Vec::new();
-        if let Some(rx) = &self.space_rx {
+
+        // 收集所有接收到的数据
+        let mut received_spaces = Vec::new();
+        if let Some(rx) = &self.state.space_rx {
             while let Ok(spaces) = rx.try_recv() {
-                spaces_list.push(spaces);
+                received_spaces.push(spaces);
             }
         }
-        
-        // 写入共享状态
-        let shared_data = get_spaces_data();
-        for spaces in spaces_list {
-            *shared_data.lock().unwrap() = spaces.clone();
-            self.apply_spaces(cx, &spaces);
+
+        // 处理接收到的数据
+        for spaces in received_spaces {
+            self.state.spaces_data = spaces;
+            println!(
+                "收到 {} 个空间的数据，通过 PortalList 实现真正无限制渲染",
+                self.state.spaces_data.len()
+            );
+            cx.redraw_all();
         }
     }
 
-    fn apply_spaces(&mut self, cx: &mut Cx, spaces: &[SpaceDto]) {
-        // 触发重新渲染
-        cx.redraw_all();
-        
-        println!("=== APPLY SPACES DEBUG ===");
-        println!("apply_spaces: received {} spaces", spaces.len());
-        for (i, space) in spaces.iter().enumerate() {
-            println!("  Space {}: '{}' with {} cards", i, space.title, space.cards.len());
-            for (j, card) in space.cards.iter().enumerate() {
-                println!("    Card {}: '{}'", j, card.title);
-            }
-        }
-        println!("=== END DEBUG ===");
-        
-        if spaces.is_empty() {
-            // 没有空间时更新第一个 CardList 的标题
-            self.ui
-                .view(id!(space))
-                .label(id!(header_row.title))
-                .set_text(cx, "暂无空间");
-        }
-    }
-}
+    fn start_create_space(&mut self) {
+        // 重置接收器以允许重复调用
+        self.state.create_space_rx = None;
 
-impl AppMain for App {
-    fn handle_event(&mut self, cx: &mut Cx, event: &Event) {
-        println!("=== APP EVENT: {:?} ===", event);
-        
-        if let Event::Startup = event {
-            println!("App started! Starting space fetch...");
-            self.start_space_fetch();
-        }
-        if let Event::Signal = event {
-            println!("Received signal!");
-            self.handle_space_signal(cx);
-        }
-        let actions = cx.capture_actions(|cx| {
-            self.ui.handle_event(cx, event, &mut Scope::empty());
+        let (tx, rx) = std::sync::mpsc::channel();
+        let signal = self.state.create_space_signal.clone();
+        self.state.create_space_rx = Some(rx);
+
+        std::thread::spawn(move || {
+            // 创建新空间的请求数据
+            let new_space = CreateSpaceRequest {
+                title: format!("新空间 {}", chrono::Utc::now().format("%H:%M:%S")),
+                user_id: "1".to_string(),
+                canceled: Some(false),
+                sort: Some(1),
+                color: Some("#FFFFFF".to_string()),
+                sort_by: Some("created_at".to_string()),
+            };
+
+            // 发送 POST 请求创建空间
+            let client = reqwest::blocking::Client::new();
+            let request = client
+                .post("http://localhost:8911/api/v1/space")
+                .header("Content-Type", "application/json")
+                .json(&new_space)
+                .send();
+
+            match request {
+                Ok(response) => {
+                    if response.status().is_success() {
+                        let _ = tx.send(true);
+                    } else {
+                        let _ = tx.send(false);
+                    }
+                }
+                Err(_) => {
+                    let _ = tx.send(false);
+                }
+            }
+
+            signal.set();
         });
-        self.handle_actions(cx, &actions);
+    }
+
+    fn handle_create_space_signal(&mut self, _cx: &mut Cx) {
+        if !self.state.create_space_signal.check_and_clear() {
+            return;
+        }
+
+        // 收集所有接收到的结果
+        let mut received_results = Vec::new();
+        if let Some(rx) = &self.state.create_space_rx {
+            while let Ok(success) = rx.try_recv() {
+                received_results.push(success);
+            }
+        }
+
+        // 处理接收到的结果
+        for success in received_results {
+            if success {
+                // 创建成功后自动刷新空间列表
+                self.start_space_fetch();
+            }
+        }
+    }
+
+    // 卡片 CRUD 方法
+    fn show_card_modal(&mut self, cx: &mut Cx, space_id: i64, card_id: Option<i64>) {
+        self.state.current_space_id = Some(space_id);
+        self.state.current_card_id = card_id;
+        self.state.is_editing_card = card_id.is_some();
+        
+        if let Some(card_id) = card_id {
+            // 编辑模式：填充现有卡片数据
+            let card_data = self.find_card_by_id(card_id).map(|card| {
+                (card.title.clone(), card.description.clone().unwrap_or_default())
+            });
+            
+            if let Some((title, description)) = card_data {
+                self.state.card_title = title;
+                self.state.card_description = description;
+            }
+        } else {
+            // 创建模式：清空表单
+            self.state.card_title.clear();
+            self.state.card_description.clear();
+        }
+        
+        self.state.card_modal_visible = true;
+        cx.redraw_all();
+    }
+
+    fn hide_card_modal(&mut self, cx: &mut Cx) {
+        self.state.card_modal_visible = false;
+        self.state.current_space_id = None;
+        self.state.current_card_id = None;
+        self.state.card_title.clear();
+        self.state.card_description.clear();
+        cx.redraw_all();
+    }
+
+    fn find_card_by_id(&self, card_id: i64) -> Option<&CardDto> {
+        for space in &self.state.spaces_data {
+            for card in &space.cards {
+                if card.id == card_id {
+                    return Some(card);
+                }
+            }
+        }
+        None
+    }
+
+    fn find_space_id_by_card_id(&self, card_id: i64) -> Option<i64> {
+        for space in &self.state.spaces_data {
+            for card in &space.cards {
+                if card.id == card_id {
+                    return Some(space.id);
+                }
+            }
+        }
+        None
+    }
+
+    fn create_card(&mut self) {
+        if let Some(space_id) = self.state.current_space_id {
+            let (tx, rx) = std::sync::mpsc::channel();
+            let signal = self.state.card_signal.clone();
+            self.state.card_rx = Some(rx);
+
+            let title = self.state.card_title.clone();
+            let description = self.state.card_description.clone();
+
+            std::thread::spawn(move || {
+                let new_card = CreateCardRequest {
+                    title,
+                    description: if description.is_empty() { None } else { Some(description) },
+                    status: Some(false),
+                    space_id,
+                };
+
+                let client = reqwest::blocking::Client::new();
+                let request = client
+                    .post("http://localhost:8911/api/v1/card")
+                    .header("Content-Type", "application/json")
+                    .json(&new_card)
+                    .send();
+
+                match request {
+                    Ok(response) => {
+                        let success = response.status().is_success();
+                        let _ = tx.send(success);
+                    }
+                    Err(_) => {
+                        let _ = tx.send(false);
+                    }
+                }
+
+                signal.set();
+            });
+        }
+    }
+
+    fn update_card(&mut self) {
+        if let (Some(card_id), Some(_space_id)) = (self.state.current_card_id, self.state.current_space_id) {
+            let (tx, rx) = std::sync::mpsc::channel();
+            let signal = self.state.card_signal.clone();
+            self.state.card_rx = Some(rx);
+
+            let title = self.state.card_title.clone();
+            let description = self.state.card_description.clone();
+
+            std::thread::spawn(move || {
+                let update_card = UpdateCardRequest {
+                    title,
+                    description: if description.is_empty() { None } else { Some(description) },
+                    status: Some(false),
+                };
+
+                let client = reqwest::blocking::Client::new();
+                let request = client
+                    .put(&format!("http://localhost:8911/api/v1/card/{}", card_id))
+                    .header("Content-Type", "application/json")
+                    .json(&update_card)
+                    .send();
+
+                match request {
+                    Ok(response) => {
+                        let success = response.status().is_success();
+                        let _ = tx.send(success);
+                    }
+                    Err(_) => {
+                        let _ = tx.send(false);
+                    }
+                }
+
+                signal.set();
+            });
+        }
+    }
+
+    fn delete_card(&mut self, card_id: i64) {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let signal = self.state.card_signal.clone();
+        self.state.card_rx = Some(rx);
+
+        std::thread::spawn(move || {
+            let client = reqwest::blocking::Client::new();
+            let request = client
+                .delete(&format!("http://localhost:8911/api/v1/card/{}", card_id))
+                .send();
+
+            match request {
+                Ok(response) => {
+                    let success = response.status().is_success();
+                    let _ = tx.send(success);
+                }
+                Err(_) => {
+                    let _ = tx.send(false);
+                }
+            }
+
+            signal.set();
+        });
+    }
+
+    fn create_card_from_input(&mut self, space_id: i64, title: String) {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let signal = self.state.card_signal.clone();
+        self.state.card_rx = Some(rx);
+
+        std::thread::spawn(move || {
+            let new_card = CreateCardRequest {
+                title,
+                description: None,
+                status: Some(false),
+                space_id,
+            };
+
+            let client = reqwest::blocking::Client::new();
+            let request = client
+                .post("http://localhost:8911/api/v1/card")
+                .header("Content-Type", "application/json")
+                .json(&new_card)
+                .send();
+
+            match request {
+                Ok(response) => {
+                    let success = response.status().is_success();
+                    let _ = tx.send(success);
+                }
+                Err(_) => {
+                    let _ = tx.send(false);
+                }
+            }
+
+            signal.set();
+        });
+    }
+
+    fn handle_card_signal(&mut self, _cx: &mut Cx) {
+        if !self.state.card_signal.check_and_clear() {
+            return;
+        }
+
+        let mut received_results = Vec::new();
+        if let Some(rx) = &self.state.card_rx {
+            while let Ok(success) = rx.try_recv() {
+                received_results.push(success);
+            }
+        }
+
+        for success in received_results {
+            if success {
+                self.start_space_fetch(); // 刷新数据
+            }
+        }
+    }
+
+    fn update_space_title(&mut self, space_id: i64, new_title: String) {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let signal = self.state.space_update_signal.clone();
+        self.state.space_update_rx = Some(rx);
+
+        std::thread::spawn(move || {
+            let update_space = UpdateSpaceRequest {
+                title: new_title,
+            };
+
+            let client = reqwest::blocking::Client::new();
+            let request = client
+                .put(&format!("http://localhost:8911/api/v1/space/{}", space_id))
+                .header("Content-Type", "application/json")
+                .json(&update_space)
+                .send();
+
+            match request {
+                Ok(response) => {
+                    let success = response.status().is_success();
+                    let _ = tx.send(success);
+                }
+                Err(_) => {
+                    let _ = tx.send(false);
+                }
+            }
+
+            signal.set();
+        });
+    }
+
+    fn update_card_title(&mut self, card_id: i64, new_title: String) {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let signal = self.state.card_update_signal.clone();
+        self.state.card_update_rx = Some(rx);
+
+        std::thread::spawn(move || {
+            let update_card = UpdateCardRequest {
+                title: new_title,
+                description: None,
+                status: Some(false),
+            };
+
+            let client = reqwest::blocking::Client::new();
+            let request = client
+                .put(&format!("http://localhost:8911/api/v1/card/{}", card_id))
+                .header("Content-Type", "application/json")
+                .json(&update_card)
+                .send();
+
+            match request {
+                Ok(response) => {
+                    let success = response.status().is_success();
+                    let _ = tx.send(success);
+                }
+                Err(_) => {
+                    let _ = tx.send(false);
+                }
+            }
+
+            signal.set();
+        });
+    }
+
+    fn handle_space_update_signal(&mut self, _cx: &mut Cx) {
+        if !self.state.space_update_signal.check_and_clear() {
+            return;
+        }
+
+        let mut received_results = Vec::new();
+        if let Some(rx) = &self.state.space_update_rx {
+            while let Ok(success) = rx.try_recv() {
+                received_results.push(success);
+            }
+        }
+
+        for success in received_results {
+            if success {
+                self.start_space_fetch(); // 刷新数据
+            }
+        }
+    }
+
+    fn handle_card_update_signal(&mut self, _cx: &mut Cx) {
+        if !self.state.card_update_signal.check_and_clear() {
+            return;
+        }
+
+        let mut received_results = Vec::new();
+        if let Some(rx) = &self.state.card_update_rx {
+            while let Ok(success) = rx.try_recv() {
+                received_results.push(success);
+            }
+        }
+
+        for success in received_results {
+            if success {
+                self.start_space_fetch(); // 刷新数据
+            }
+        }
     }
 }
 
@@ -213,30 +499,227 @@ impl LiveRegister for App {
     }
 }
 
-impl MatchEvent for App {
-    fn handle_actions(&mut self, cx: &mut Cx, actions: &Actions) {
-        // 处理卡片模态框的关闭按钮
-        if self.ui.button(id!(card_modal.close_button)).clicked(actions)
-            || self.ui.button(id!(card_modal.cancel_button)).clicked(actions)
-        {
-            self.ui.modal(id!(card_modal)).close(cx);
+impl LiveHook for App {
+    fn after_new_from_doc(&mut self, _cx: &mut Cx) {
+        self.start_space_fetch();
+    }
+}
+
+impl AppMain for App {
+    fn handle_event(&mut self, cx: &mut Cx, event: &Event) {
+        match event {
+            Event::Startup => {
+                self.start_space_fetch();
+            }
+            Event::Signal => {
+                self.handle_space_signal(cx);
+                self.handle_create_space_signal(cx);
+                self.handle_card_signal(cx);
+                self.handle_space_update_signal(cx);
+                self.handle_card_update_signal(cx);
+            }
+            _ => {}
+        }
+
+        self.match_event(cx, event);
+        let mut scope = Scope::with_data(&mut self.state);
+        self.ui.handle_event(cx, event, &mut scope);
+
+        // 处理待处理的按钮点击
+        if let Some(space_id) = self.state.pending_add_card_space_id.take() {
+            println!("添加新卡片输入框到空间: {}", space_id);
+            // 添加新的输入框状态
+            self.state.new_card_inputs.insert(space_id, String::new());
+            cx.redraw_all();
         }
         
-        // 简化的事件处理 - 检查任何按钮点击
-        for action in actions.iter() {
-            if let Some(button_action) = action.as_widget_action() {
-                if button_action.action.is::<ButtonAction>() {
-                    // 简单检查：如果有按钮被点击，就打开模态框
-                    // 这是一个临时解决方案，后续可以通过更精确的事件处理来优化
-                    println!("Button clicked! Opening modal...");
-                    self.ui.modal(id!(card_modal)).open(cx);
-                    break;
-                }
+        if let Some(card_id) = self.state.pending_edit_card_id.take() {
+            println!("编辑卡片: {}", card_id);
+        }
+        
+        if let Some(card_id) = self.state.pending_delete_card_id.take() {
+            println!("删除卡片: {}", card_id);
+            self.delete_card(card_id);
+        }
+        
+        // 处理待处理的更新
+        if let Some((space_id, new_title)) = self.state.pending_space_update.take() {
+            println!("更新空间标题: {} -> {}", space_id, new_title);
+            self.update_space_title(space_id, new_title);
+        }
+        
+        if let Some((card_id, new_title)) = self.state.pending_card_update.take() {
+            println!("更新卡片标题: {} -> {}", card_id, new_title);
+            self.update_card_title(card_id, new_title);
+        }
+        
+        // 处理新卡片创建
+        if let Some((space_id, title)) = self.state.pending_create_card.take() {
+            if !title.trim().is_empty() {
+                println!("创建新卡片: {} 到空间: {}", title, space_id);
+                self.create_card_from_input(space_id, title.trim().to_string());
+                // 清除输入框状态
+                self.state.new_card_inputs.remove(&space_id);
+                cx.redraw_all();
             }
         }
     }
 }
 
-impl App {}
+impl MatchEvent for App {
+    fn handle_actions(&mut self, _cx: &mut Cx, actions: &Actions) {
+        // 处理刷新按钮点击
+        if self.ui.button(id!(refresh_button)).clicked(&actions) {
+            self.start_space_fetch();
+        }
+
+        // 处理创建空间按钮点击
+        if self.ui.button(id!(create_button)).clicked(&actions) {
+            self.start_create_space();
+        }
+        
+        // 处理测试添加卡片按钮点击
+        if self.ui.button(id!(test_add_card_button)).clicked(&actions) {
+            if !self.state.spaces_data.is_empty() {
+                let space_id = self.state.spaces_data[0].id;
+                println!("测试：添加新卡片输入框到空间 {}", space_id);
+                self.state.new_card_inputs.insert(space_id, String::new());
+            }
+        }
+        
+        // 处理新卡片输入框的回车键事件
+        if let Some((text, _)) = self.ui.text_input(id!(new_card_text_input)).returned(&actions) {
+            if !text.trim().is_empty() {
+                // 查找哪个空间的输入框被触发
+                for space in &self.state.spaces_data {
+                    let space_id = space.id;
+                    if self.state.new_card_inputs.contains_key(&space_id) {
+                        println!("创建新卡片: '{}' 到空间: {}", text.trim(), space_id);
+                        self.state.pending_create_card = Some((space_id, text.trim().to_string()));
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 处理卡片相关的按钮点击
+        for space in &self.state.spaces_data {
+            for card in &space.cards {
+                // 处理删除卡片按钮点击
+                if self.ui.button(id!(delete_card_btn)).clicked(&actions) {
+                    self.state.pending_delete_card_id = Some(card.id);
+                    return; // 只处理第一个匹配的按钮
+                }
+            }
+        }
+
+        // 处理新卡片输入框的文本变化和失去焦点事件
+        // 简化版本：暂时通过其他方式处理输入框事件
+        // TODO: 实现完整的 TextInput 事件处理
+    }
+}
+
+
+pub struct State {
+    pub spaces_data: Vec<SpaceDto>,
+    pub space_signal: SignalToUI,
+    pub space_rx: Option<Receiver<Vec<SpaceDto>>>,
+    pub create_space_signal: SignalToUI,
+    pub create_space_rx: Option<Receiver<bool>>,
+    
+    // 卡片 CRUD 相关
+    pub card_signal: SignalToUI,
+    pub card_rx: Option<Receiver<bool>>,
+    pub current_space_id: Option<i64>,
+    pub current_card_id: Option<i64>,
+    pub card_modal_visible: bool,
+    pub card_title: String,
+    pub card_description: String,
+    pub is_editing_card: bool,
+    
+    // 按钮点击状态
+    pub pending_add_card_space_id: Option<i64>,
+    pub pending_edit_card_id: Option<i64>,
+    pub pending_delete_card_id: Option<i64>,
+    
+    // 内联编辑状态
+    pub editing_space_id: Option<i64>,
+    pub editing_card_id: Option<i64>,
+    pub space_update_signal: SignalToUI,
+    pub space_update_rx: Option<Receiver<bool>>,
+    pub card_update_signal: SignalToUI,
+    pub card_update_rx: Option<Receiver<bool>>,
+    
+    // 待处理的更新
+    pub pending_space_update: Option<(i64, String)>,
+    pub pending_card_update: Option<(i64, String)>,
+    
+    // 新卡片输入框状态
+    pub new_card_inputs: std::collections::HashMap<i64, String>, // space_id -> input_text
+    pub pending_create_card: Option<(i64, String)>, // space_id, title
+}
+
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            spaces_data: Vec::new(),
+            space_signal: SignalToUI::default(),
+            space_rx: None,
+            create_space_signal: SignalToUI::default(),
+            create_space_rx: None,
+            
+            // 卡片 CRUD 相关
+            card_signal: SignalToUI::default(),
+            card_rx: None,
+            current_space_id: None,
+            current_card_id: None,
+            card_modal_visible: false,
+            card_title: String::new(),
+            card_description: String::new(),
+            is_editing_card: false,
+            
+            // 按钮点击状态
+            pending_add_card_space_id: None,
+            pending_edit_card_id: None,
+            pending_delete_card_id: None,
+            
+            // 内联编辑状态
+            editing_space_id: None,
+            editing_card_id: None,
+            space_update_signal: SignalToUI::default(),
+            space_update_rx: None,
+            card_update_signal: SignalToUI::default(),
+            card_update_rx: None,
+            
+            // 待处理的更新
+            pending_space_update: None,
+            pending_card_update: None,
+            
+            // 新卡片输入框状态
+            new_card_inputs: std::collections::HashMap::new(),
+            pending_create_card: None,
+        }
+    }
+}
+
+// 辅助函数：格式化卡片信息
+fn format_cards_info(cards: &[CardDto]) -> String {
+    if cards.is_empty() {
+        "暂无卡片".to_string()
+    } else {
+        let mut info = format!("{} 张卡片:\n", cards.len());
+        for (idx, card) in cards.iter().enumerate() {
+            if idx < 3 {
+                // 最多显示3张卡片
+                info.push_str(&format!("• {}\n", card.title));
+            } else if idx == 3 {
+                info.push_str(&format!("... 还有 {} 张卡片", cards.len() - 3));
+                break;
+            }
+        }
+        info
+    }
+}
 
 app_main!(App);
+
