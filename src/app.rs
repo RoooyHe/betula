@@ -103,10 +103,32 @@ impl App {
         // 处理接收到的数据
         for spaces in received_spaces {
             self.state.spaces_data = spaces;
+            
+            // 缓存所有卡片的原始文本
+            self.state.card_original_texts.clear();
+            let mut total_cards = 0;
+            for space in &self.state.spaces_data {
+                for card in &space.cards {
+                    self.state.card_original_texts.insert(card.id, card.title.clone());
+                    total_cards += 1;
+                }
+            }
+            
             println!(
-                "收到 {} 个空间的数据，通过 PortalList 实现真正无限制渲染",
-                self.state.spaces_data.len()
+                "收到 {} 个空间的数据，共 {} 张卡片，通过 PortalList 实现真正无限制渲染",
+                self.state.spaces_data.len(),
+                total_cards
             );
+            
+            // 打印第一个空间的卡片信息用于调试
+            if !self.state.spaces_data.is_empty() {
+                let first_space = &self.state.spaces_data[0];
+                println!("第一个空间 '{}' 有 {} 张卡片", first_space.title, first_space.cards.len());
+                for card in &first_space.cards {
+                    println!("  - 卡片: {}", card.title);
+                }
+            }
+            
             cx.redraw_all();
         }
     }
@@ -248,7 +270,7 @@ impl App {
                     title,
                     description: if description.is_empty() { None } else { Some(description) },
                     status: Some(false),
-                    space_id,
+                    space: SpaceReference { id: space_id },
                 };
 
                 let client = reqwest::blocking::Client::new();
@@ -341,13 +363,17 @@ impl App {
         let signal = self.state.card_signal.clone();
         self.state.card_rx = Some(rx);
 
+        println!("create_card_from_input: 开始创建卡片 '{}' 到空间 {}", title, space_id);
+
         std::thread::spawn(move || {
             let new_card = CreateCardRequest {
-                title,
+                title: title.clone(),
                 description: None,
                 status: Some(false),
-                space_id,
+                space: SpaceReference { id: space_id },
             };
+
+            println!("create_card_from_input: 发送API请求，数据: {:?}", new_card);
 
             let client = reqwest::blocking::Client::new();
             let request = client
@@ -358,14 +384,26 @@ impl App {
 
             match request {
                 Ok(response) => {
-                    let success = response.status().is_success();
-                    let _ = tx.send(success);
+                    let status = response.status();
+                    println!("create_card_from_input: API响应状态: {}", status);
+                    
+                    if status.is_success() {
+                        if let Ok(response_text) = response.text() {
+                            println!("create_card_from_input: API响应内容: {}", response_text);
+                        }
+                        let _ = tx.send(true);
+                    } else {
+                        println!("create_card_from_input: API请求失败，状态码: {}", status);
+                        let _ = tx.send(false);
+                    }
                 }
-                Err(_) => {
+                Err(e) => {
+                    println!("create_card_from_input: API请求错误: {}", e);
                     let _ = tx.send(false);
                 }
             }
 
+            println!("create_card_from_input: 设置信号");
             signal.set();
         });
     }
@@ -375,16 +413,22 @@ impl App {
             return;
         }
 
+        println!("handle_card_signal: 收到卡片信号");
+
         let mut received_results = Vec::new();
         if let Some(rx) = &self.state.card_rx {
             while let Ok(success) = rx.try_recv() {
+                println!("handle_card_signal: 收到结果: {}", success);
                 received_results.push(success);
             }
         }
 
         for success in received_results {
             if success {
+                println!("handle_card_signal: 卡片创建成功，刷新数据");
                 self.start_space_fetch(); // 刷新数据
+            } else {
+                println!("handle_card_signal: 卡片创建失败");
             }
         }
     }
@@ -518,6 +562,18 @@ impl AppMain for App {
                 self.handle_space_update_signal(cx);
                 self.handle_card_update_signal(cx);
             }
+            Event::KeyDown(key_event) => {
+                // 添加键盘快捷键测试
+                if key_event.key_code == makepad_widgets::KeyCode::KeyA {
+                    println!("键盘快捷键A被按下，测试添加输入框");
+                    if !self.state.spaces_data.is_empty() {
+                        let space_id = self.state.spaces_data[0].id;
+                        self.state.new_card_inputs.insert(space_id, String::new());
+                        println!("通过键盘快捷键添加输入框到空间: {}", space_id);
+                        cx.redraw_all();
+                    }
+                }
+            }
             _ => {}
         }
 
@@ -525,13 +581,7 @@ impl AppMain for App {
         let mut scope = Scope::with_data(&mut self.state);
         self.ui.handle_event(cx, event, &mut scope);
 
-        // 处理待处理的按钮点击
-        if let Some(space_id) = self.state.pending_add_card_space_id.take() {
-            println!("添加新卡片输入框到空间: {}", space_id);
-            // 添加新的输入框状态
-            self.state.new_card_inputs.insert(space_id, String::new());
-            cx.redraw_all();
-        }
+        // 处理待处理的按钮点击 - 移除pending_add_card_space_id处理，现在直接在SpaceColumn中处理
         
         if let Some(card_id) = self.state.pending_edit_card_id.take() {
             println!("编辑卡片: {}", card_id);
@@ -567,7 +617,7 @@ impl AppMain for App {
 }
 
 impl MatchEvent for App {
-    fn handle_actions(&mut self, _cx: &mut Cx, actions: &Actions) {
+    fn handle_actions(&mut self, cx: &mut Cx, actions: &Actions) {
         // 处理刷新按钮点击
         if self.ui.button(id!(refresh_button)).clicked(&actions) {
             self.start_space_fetch();
@@ -578,27 +628,23 @@ impl MatchEvent for App {
             self.start_create_space();
         }
         
+        // 处理创建卡片按钮点击 - 尝试直接访问
+        if self.ui.button(id!(create_button)).clicked(&actions) {
+            println!("App: 检测到创建卡片按钮点击");
+            if !self.state.spaces_data.is_empty() {
+                let space_id = self.state.spaces_data[0].id; // 暂时使用第一个空间
+                self.state.new_card_inputs.insert(space_id, String::new());
+                println!("App: 添加新卡片输入框到空间ID: {}", space_id);
+                cx.redraw_all();
+            }
+        }
+        
         // 处理测试添加卡片按钮点击
         if self.ui.button(id!(test_add_card_button)).clicked(&actions) {
             if !self.state.spaces_data.is_empty() {
                 let space_id = self.state.spaces_data[0].id;
                 println!("测试：添加新卡片输入框到空间 {}", space_id);
                 self.state.new_card_inputs.insert(space_id, String::new());
-            }
-        }
-        
-        // 处理新卡片输入框的回车键事件
-        if let Some((text, _)) = self.ui.text_input(id!(new_card_text_input)).returned(&actions) {
-            if !text.trim().is_empty() {
-                // 查找哪个空间的输入框被触发
-                for space in &self.state.spaces_data {
-                    let space_id = space.id;
-                    if self.state.new_card_inputs.contains_key(&space_id) {
-                        println!("创建新卡片: '{}' 到空间: {}", text.trim(), space_id);
-                        self.state.pending_create_card = Some((space_id, text.trim().to_string()));
-                        break;
-                    }
-                }
             }
         }
 
@@ -657,6 +703,9 @@ pub struct State {
     // 新卡片输入框状态
     pub new_card_inputs: std::collections::HashMap<i64, String>, // space_id -> input_text
     pub pending_create_card: Option<(i64, String)>, // space_id, title
+    
+    // 卡片原始文本缓存（用于对比是否有变化）
+    pub card_original_texts: std::collections::HashMap<i64, String>, // card_id -> original_text
 }
 
 impl Default for State {
@@ -698,6 +747,9 @@ impl Default for State {
             // 新卡片输入框状态
             new_card_inputs: std::collections::HashMap::new(),
             pending_create_card: None,
+            
+            // 卡片原始文本缓存
+            card_original_texts: std::collections::HashMap::new(),
         }
     }
 }

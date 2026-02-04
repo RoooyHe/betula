@@ -8,7 +8,7 @@ live_design! {
     pub CardList = {{CardList}} {
         <View> {
             width: Fill,
-            height: Fit,
+            height: Fill,  // 改为Fill，确保有足够的高度
             flow: Down,
             spacing: 5,
             
@@ -70,6 +70,8 @@ live_design! {
 pub struct CardList {
     #[deref]
     view: View,
+    #[rust]
+    space_idx: Option<usize>,
 }
 
 impl Widget for CardList {
@@ -78,46 +80,119 @@ impl Widget for CardList {
         
         // 处理新卡片输入框的事件
         if let Event::Actions(actions) = event {
+            // 处理新卡片输入框文本变化事件（用于实时更新状态）
+            if let Some(text) = self.view.text_input(id!(new_card_text_input)).changed(actions) {
+                let state = scope.data.get_mut::<crate::app::State>().unwrap();
+                
+                // 使用存储的space_idx
+                let space_id = if let Some(space_idx) = self.space_idx {
+                    if space_idx < state.spaces_data.len() {
+                        state.spaces_data[space_idx].id
+                    } else {
+                        println!("CardList: space_idx {} 超出范围，使用第一个空间", space_idx);
+                        if !state.spaces_data.is_empty() {
+                            state.spaces_data[0].id
+                        } else {
+                            return; // 没有空间数据，直接返回
+                        }
+                    }
+                } else {
+                    println!("CardList: space_idx 未设置，使用第一个空间");
+                    if !state.spaces_data.is_empty() {
+                        state.spaces_data[0].id
+                    } else {
+                        return; // 没有空间数据，直接返回
+                    }
+                };
+                
+                // 更新输入框状态
+                state.new_card_inputs.insert(space_id, text.clone());
+                println!("CardList: 更新输入框文本到空间 {}: '{}'", space_id, text);
+            }
+            
             // 处理回车键创建新卡片
             if let Some((text, _)) = self.view.text_input(id!(new_card_text_input)).returned(actions) {
                 if !text.trim().is_empty() {
                     let state = scope.data.get_mut::<crate::app::State>().unwrap();
-                    let space_idx = *scope.props.get::<usize>().unwrap();
-                    let space_id = state.spaces_data[space_idx].id;
                     
+                    // 使用存储的space_idx
+                    let space_id = if let Some(space_idx) = self.space_idx {
+                        if space_idx < state.spaces_data.len() {
+                            state.spaces_data[space_idx].id
+                        } else {
+                            println!("CardList: space_idx {} 超出范围，使用第一个空间", space_idx);
+                            if !state.spaces_data.is_empty() {
+                                state.spaces_data[0].id
+                            } else {
+                                return; // 没有空间数据，直接返回
+                            }
+                        }
+                    } else {
+                        println!("CardList: space_idx 未设置，使用第一个空间");
+                        if !state.spaces_data.is_empty() {
+                            state.spaces_data[0].id
+                        } else {
+                            return; // 没有空间数据，直接返回
+                        }
+                    };
+                    
+                    println!("新卡片输入框回车，创建卡片: '{}' 到空间: {}", text.trim(), space_id);
                     // 设置待创建的卡片
                     state.pending_create_card = Some((space_id, text.trim().to_string()));
-                    println!("设置待创建卡片: '{}' 到空间: {}", text.trim(), space_id);
+                    // 清空输入框并隐藏
+                    self.view.text_input(id!(new_card_text_input)).set_text(cx, "");
+                    state.new_card_inputs.remove(&space_id);
                 }
-            }
-            
-            // 处理输入框文本变化事件
-            if let Some(text) = self.view.text_input(id!(new_card_text_input)).changed(actions) {
-                let state = scope.data.get_mut::<crate::app::State>().unwrap();
-                let space_idx = *scope.props.get::<usize>().unwrap();
-                let space_id = state.spaces_data[space_idx].id;
-                
-                // 更新输入框状态
-                state.new_card_inputs.insert(space_id, text);
             }
         }
     }
 
     fn draw_walk(&mut self, cx: &mut Cx2d, scope: &mut Scope, walk: Walk) -> DrawStep {
+        // 在draw阶段从scope.props获取并存储space_idx
+        if let Some(space_idx) = scope.props.get::<usize>() {
+            self.space_idx = Some(*space_idx);
+        }
+        
         // 先获取需要的数据
         let (_space_idx, _space_id, has_new_input, current_text, cards_data) = {
             let state = scope.data.get_mut::<crate::app::State>().unwrap();
-            let space_idx = *scope.props.get::<usize>().unwrap();
-            let space_id = state.spaces_data[space_idx].id;
+            
+            // 使用存储的space_idx
+            let (space_idx, space_id) = if let Some(space_idx) = self.space_idx {
+                if space_idx < state.spaces_data.len() {
+                    (space_idx, state.spaces_data[space_idx].id)
+                } else {
+                    println!("CardList draw_walk: space_idx {} 超出范围，使用第一个空间", space_idx);
+                    if !state.spaces_data.is_empty() {
+                        (0, state.spaces_data[0].id)
+                    } else {
+                        return DrawStep::done(); // 没有空间数据，直接返回
+                    }
+                }
+            } else {
+                if !state.spaces_data.is_empty() {
+                    (0, state.spaces_data[0].id)
+                } else {
+                    return DrawStep::done(); // 没有空间数据，直接返回
+                }
+            };
+            
             let has_new_input = state.new_card_inputs.contains_key(&space_id);
             let default_text = String::new();
             let current_text = state.new_card_inputs.get(&space_id).unwrap_or(&default_text).clone();
             let cards_data = state.spaces_data[space_idx].cards.clone();
+            
+            // 调试信息
+            if space_idx == 0 {
+                println!("CardList draw_walk: 空间 {} 有 {} 张卡片", space_id, cards_data.len());
+            }
+            
             (space_idx, space_id, has_new_input, current_text, cards_data)
         };
 
         // 处理新卡片输入框的可见性
         if has_new_input {
+            println!("CardList: 显示新卡片输入框，空间ID: {}", _space_id);
             self.view.view(id!(new_card_input)).apply_over(cx, live! { visible: true });
             
             let text_input = self.view.text_input(id!(new_card_text_input));
@@ -129,6 +204,11 @@ impl Widget for CardList {
         while let Some(item) = self.view.draw_walk(cx, scope, walk).step() {
             if let Some(mut list) = item.as_portal_list().borrow_mut() {
                 list.set_item_range(cx, 0, cards_data.len());
+                
+                // 调试信息
+                if cards_data.len() > 0 {
+                    println!("CardList PortalList: 设置 {} 张卡片", cards_data.len());
+                }
 
                 while let Some(card_idx) = list.next_visible_item(cx) {
                     if card_idx >= cards_data.len() {
@@ -137,6 +217,8 @@ impl Widget for CardList {
 
                     let card_item = list.item(cx, card_idx, live_id!(Card));
                     let card = &cards_data[card_idx];
+                    
+                    println!("渲染卡片 {}: {}", card_idx, card.title);
 
                     // 设置卡片标题输入框
                     card_item
@@ -157,7 +239,9 @@ impl Widget for CardList {
                         .label(id!(card_tags))
                         .set_text(cx, &format!("标签: {}", tags_text));
 
-                    card_item.draw_all(cx, &mut Scope::empty());
+                    // 为CardItem传递card_id
+                    let mut card_scope = Scope::with_data_props(scope.data.get_mut::<crate::app::State>().unwrap(), &card.id);
+                    card_item.draw_all(cx, &mut card_scope);
                 }
             }
         }
