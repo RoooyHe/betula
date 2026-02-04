@@ -21,14 +21,8 @@ live_design! {
             color: #FFFFFFFF
         }
 
-        tag_list: <PortalList> {
-            width: Fit,
-            height: Fit,
-            flow: Right,
-            spacing: 4,
-
-            CardTag = <CardTag> {}
-        }
+        flow: Down,
+        spacing: 4,
 
         title_text = <Button> {
             text: "完成代码编辑"
@@ -36,6 +30,10 @@ live_design! {
                 color: #3E3342FF
             }
         }
+        
+        // 固定标签用于测试
+        <CardTag> {}
+        
         meta_row = <View> {
             width: Fill,
             height: Fit,
@@ -51,9 +49,6 @@ live_design! {
 pub struct CardItem {
     #[deref]
     view: View,
-    
-    #[live]
-    tag_list: PortalList,
 }
 
 impl Widget for CardItem {
@@ -75,9 +70,8 @@ impl Widget for CardItem {
         // 更新标题
         if let Some(ref card) = card {
             self.view.button(id!(title_text)).set_text(cx, &card.title);
-            println!("CardItem {}.{}: {}", space_index, card_index, card.title);
         } else {
-            self.view.button(id!(title_text)).set_text(cx, "卡片");
+            self.view.button(id!(title_text)).set_text(cx, &format!("卡片 {}.{}", space_index, card_index));
         }
         
         self.view.draw_walk(cx, scope, walk)

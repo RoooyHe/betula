@@ -5,7 +5,7 @@ use crate::components::space::{SpaceDto, get_spaces_data};
 live_design! {
     use link::theme::*;
     use link::widgets::*;
-    use crate::markdown::*;
+
     use crate::components::card_list::*;
     use crate::components::card_modal::*;
     use crate::components::space::*;
@@ -116,15 +116,27 @@ impl App {
         if self.space_rx.is_some() {
             return;
         }
+        
         let (tx, rx) = std::sync::mpsc::channel();
         let signal = self.space_signal.clone();
         self.space_rx = Some(rx);
+        
         std::thread::spawn(move || {
             let request = reqwest::blocking::get("http://localhost:8911/api/v1/space/byUserId/1");
-            if let Ok(response) = request {
-                if let Ok(spaces) = response.json::<Vec<SpaceDto>>() {
-                    let _ = tx.send(spaces);
-                    signal.set();
+            match request {
+                Ok(response) => {
+                    match response.json::<Vec<SpaceDto>>() {
+                        Ok(spaces) => {
+                            let _ = tx.send(spaces);
+                            signal.set();
+                        }
+                        Err(e) => {
+                            println!("Failed to parse JSON: {}", e);
+                        }
+                    }
+                }
+                Err(e) => {
+                    println!("Failed to fetch from API: {}", e);
                 }
             }
         });
@@ -134,6 +146,7 @@ impl App {
         if !self.space_signal.check_and_clear() {
             return;
         }
+        
         // 收集所有待处理的空间数据
         let mut spaces_list = Vec::new();
         if let Some(rx) = &self.space_rx {
@@ -141,6 +154,7 @@ impl App {
                 spaces_list.push(spaces);
             }
         }
+        
         // 写入共享状态
         let shared_data = get_spaces_data();
         for spaces in spaces_list {
@@ -153,6 +167,16 @@ impl App {
         // 触发重新渲染
         cx.redraw_all();
         
+        println!("=== APPLY SPACES DEBUG ===");
+        println!("apply_spaces: received {} spaces", spaces.len());
+        for (i, space) in spaces.iter().enumerate() {
+            println!("  Space {}: '{}' with {} cards", i, space.title, space.cards.len());
+            for (j, card) in space.cards.iter().enumerate() {
+                println!("    Card {}: '{}'", j, card.title);
+            }
+        }
+        println!("=== END DEBUG ===");
+        
         if spaces.is_empty() {
             // 没有空间时更新第一个 CardList 的标题
             self.ui
@@ -160,16 +184,19 @@ impl App {
                 .label(id!(header_row.title))
                 .set_text(cx, "暂无空间");
         }
-        println!("apply_spaces: received {} spaces", spaces.len());
     }
 }
 
 impl AppMain for App {
     fn handle_event(&mut self, cx: &mut Cx, event: &Event) {
+        println!("=== APP EVENT: {:?} ===", event);
+        
         if let Event::Startup = event {
+            println!("App started! Starting space fetch...");
             self.start_space_fetch();
         }
         if let Event::Signal = event {
+            println!("Received signal!");
             self.handle_space_signal(cx);
         }
         let actions = cx.capture_actions(|cx| {
@@ -188,53 +215,24 @@ impl LiveRegister for App {
 
 impl MatchEvent for App {
     fn handle_actions(&mut self, cx: &mut Cx, actions: &Actions) {
-        // 处理三个列表中的卡片点击事件
-        if self
-            .ui
-            .button(id!(card_list_1.card_item_1.title_text))
-            .clicked(actions)
-            || self
-                .ui
-                .button(id!(card_list_1.card_item_2))
-                .clicked(actions)
-            || self
-                .ui
-                .button(id!(card_list_1.card_item_3))
-                .clicked(actions)
-            || self
-                .ui
-                .button(id!(card_list_2.card_item_1))
-                .clicked(actions)
-            || self
-                .ui
-                .button(id!(card_list_2.card_item_2))
-                .clicked(actions)
-            || self
-                .ui
-                .button(id!(card_list_2.card_item_3))
-                .clicked(actions)
-            || self
-                .ui
-                .button(id!(card_list_3.card_item_1))
-                .clicked(actions)
-            || self
-                .ui
-                .button(id!(card_list_3.card_item_2))
-                .clicked(actions)
-            || self
-                .ui
-                .button(id!(card_list_3.card_item_3))
-                .clicked(actions)
-        {
-            println!("Card clicked! Opening modal...");
-            self.ui.modal(id!(card_modal)).open(cx);
-        }
-
-        // 关闭按钮和归档按钮都可以关闭弹窗
-        if self.ui.button(id!(close_button)).clicked(actions)
-            || self.ui.button(id!(cancel_button)).clicked(actions)
+        // 处理卡片模态框的关闭按钮
+        if self.ui.button(id!(card_modal.close_button)).clicked(actions)
+            || self.ui.button(id!(card_modal.cancel_button)).clicked(actions)
         {
             self.ui.modal(id!(card_modal)).close(cx);
+        }
+        
+        // 简化的事件处理 - 检查任何按钮点击
+        for action in actions.iter() {
+            if let Some(button_action) = action.as_widget_action() {
+                if button_action.action.is::<ButtonAction>() {
+                    // 简单检查：如果有按钮被点击，就打开模态框
+                    // 这是一个临时解决方案，后续可以通过更精确的事件处理来优化
+                    println!("Button clicked! Opening modal...");
+                    self.ui.modal(id!(card_modal)).open(cx);
+                    break;
+                }
+            }
         }
     }
 }

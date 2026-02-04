@@ -24,14 +24,11 @@ live_design! {
             color: #F8F6FFFF
         }
 
-        space_list: <PortalList> {
-            width: Fill,
-            height: Fill,
-            flow: Right,
-            spacing: 10,
-
-            CardList = <CardList> {}
-        }
+        // 先使用固定的 CardList 来测试
+        <CardList> {}
+        <CardList> {}
+        <CardList> {}
+        <CardList> {}
     }
 }
 
@@ -39,9 +36,6 @@ live_design! {
 pub struct Space {
     #[deref]
     view: View,
-    
-    #[live]
-    space_list: PortalList,
 }
 
 impl Widget for Space {
@@ -50,6 +44,11 @@ impl Widget for Space {
     }
 
     fn draw_walk(&mut self, cx: &mut Cx2d, scope: &mut Scope, walk: Walk) -> DrawStep {
+        // 为每个固定的 CardList 设置对应的空间索引
+        crate::components::card_list::set_current_space_index(0);
+        // 这里我们需要手动为每个 CardList 设置不同的索引
+        // 但由于是固定的 UI 结构，我们先设置第一个为 0
+        
         self.view.draw_walk(cx, scope, walk)
     }
 }
@@ -67,6 +66,7 @@ pub struct CardDto {
     pub title: String,
     pub description: Option<String>,
     pub status: Option<bool>,
+    #[serde(rename = "endTime")]
     pub end_time: Option<String>,
     pub tags: Vec<TagDto>,
 }
@@ -75,10 +75,12 @@ pub struct CardDto {
 pub struct SpaceDto {
     pub id: i64,
     pub title: String,
+    #[serde(rename = "userId")]
     pub user_id: String,
     pub canceled: Option<bool>,
     pub sort: Option<i32>,
     pub color: Option<String>,
+    #[serde(rename = "sortBy")]
     pub sort_by: Option<String>,
     pub cards: Vec<CardDto>,
 }

@@ -6,7 +6,6 @@ use crate::components::space::get_spaces_data;
 live_design! {
     use link::theme::*;
     use link::widgets::*;
-    use crate::markdown::*;
     use crate::components::card_item::*;
 
     pub CardList = {{CardList}} {
@@ -33,14 +32,11 @@ live_design! {
             <Button> { text: "->" draw_text: { color: #6A5A72FF } }
             <Button> { text: "..." draw_text: { color: #6A5A72FF } }
         }
-        card_list: <PortalList> {
-            width: Fill,
-            height: Fit,
-            flow: Down,
-            spacing: 8,
-
-            CardItem = <CardItem> {}
-        }
+        
+        // 先使用固定的 CardItem 来测试
+        <CardItem> {}
+        <CardItem> {}
+        
         divider = <View> {
             width: Fill,
             height: 1,
@@ -83,9 +79,6 @@ pub fn get_current_card_index() -> usize {
 pub struct CardList {
     #[deref]
     view: View,
-    
-    #[live]
-    card_list: PortalList,
 }
 
 impl Widget for CardList {
@@ -101,9 +94,8 @@ impl Widget for CardList {
         // 更新标题
         if let Some(space) = spaces.get(space_index) {
             self.view.label(id!(header_row.title)).set_text(cx, &space.title);
-            println!("CardList {}: {} cards", space_index, space.cards.len());
         } else {
-            self.view.label(id!(header_row.title)).set_text(cx, "空间");
+            self.view.label(id!(header_row.title)).set_text(cx, &format!("空间 {}", space_index));
         }
         
         self.view.draw_walk(cx, scope, walk)
