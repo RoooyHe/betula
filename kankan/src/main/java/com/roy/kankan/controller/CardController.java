@@ -1,13 +1,13 @@
 package com.roy.kankan.controller;
 
+import com.roy.kankan.convert.CardConvert;
 import com.roy.kankan.dto.CardDetailDto;
 import com.roy.kankan.entity.CardEntity;
 import com.roy.kankan.repository.CardRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/card")
@@ -33,7 +33,7 @@ public class CardController {
   public ResponseEntity<CardDetailDto> getCardDetailById(@PathVariable Long id) {
     return cardRepository
         .findById(id)
-        .map(card -> ResponseEntity.ok(CardDetailDto.fromEntity(card)))
+        .map(card -> ResponseEntity.ok(CardConvert.INSTANCE.fromEntity(card)))
         .orElse(ResponseEntity.notFound().build());
   }
 

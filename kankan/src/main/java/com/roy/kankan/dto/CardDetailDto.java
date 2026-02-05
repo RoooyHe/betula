@@ -20,16 +20,5 @@ public class CardDetailDto {
     private List<TodoEntity> todos;
     private List<ActiveEntity> active;
 
-    public static CardDetailDto fromEntity(CardEntity card) {
-        CardDetailDto dto = new CardDetailDto();
-        dto.setId(card.getId());
-        dto.setTitle(card.getTitle());
-        dto.setDescription(card.getDescription());
-        dto.setStatus(card.getStatus());
-        dto.setEndTime(card.getEndTime());
-        dto.setTags(card.getTags());
-        dto.setTodos(card.getTodos());
-        dto.setActive(card.getActive());
-        return dto;
-    }
+
 }
