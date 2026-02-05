@@ -1,5 +1,5 @@
 use makepad_widgets::*;
-use serde::{Deserialize, Serialize};
+use crate::models::State;
 
 live_design! {
     use link::theme::*;
@@ -35,6 +35,9 @@ live_design! {
                     }
                     draw_bg: {
                         color: #F8F9FAFF
+                    }
+                    draw_cursor: {
+                        color: #333333FF
                     }
                 }
             }
@@ -87,7 +90,7 @@ impl Widget for SpaceColumn {
             // 处理空间标题输入框文本变化
             if let Some(text) = self.view.text_input(id!(space_title_input)).changed(actions) {
                 if let Some(space_idx) = self.space_idx {
-                    let state = scope.data.get_mut::<crate::app::State>().unwrap();
+                    let state = scope.data.get_mut::<State>().unwrap();
                     
                     if space_idx < state.spaces_data.len() {
                         let space_id = state.spaces_data[space_idx].id;
@@ -97,23 +100,51 @@ impl Widget for SpaceColumn {
                 }
             }
             
-            // 处理空间标题输入框回车或失去焦点
+            // 处理空间标题输入框回车
             if let Some((text, _)) = self.view.text_input(id!(space_title_input)).returned(actions) {
                 if let Some(space_idx) = self.space_idx {
-                    let state = scope.data.get_mut::<crate::app::State>().unwrap();
+                    let state = scope.data.get_mut::<State>().unwrap();
                     
                     if space_idx < state.spaces_data.len() {
                         let space_id = state.spaces_data[space_idx].id;
                         let current_title = &state.spaces_data[space_idx].title;
                         
                         if text.trim() != current_title && !text.trim().is_empty() {
-                            println!("SpaceColumn: 更新空间标题: '{}' -> '{}' (空间ID: {})", current_title, text.trim(), space_id);
+                            println!("SpaceColumn: 回车更新空间标题: '{}' -> '{}' (空间ID: {})", current_title, text.trim(), space_id);
                             // 设置待更新的空间标题
                             state.pending_space_update = Some((space_id, text.trim().to_string()));
                         }
                     }
                 }
             }
+            
+            // 处理空间标题输入框失去焦点
+            // 注意：Makepad 可能没有直接的 focus_lost 方法，我们可以通过其他方式检测
+            // 暂时注释掉，使用其他方法
+            /*
+            if self.view.text_input(id!(space_title_input)).focus_lost(actions) {
+                if let Some(space_idx) = self.space_idx {
+                    let state = scope.data.get_mut::<State>().unwrap();
+                    
+                    if space_idx < state.spaces_data.len() {
+                        let space_id = state.spaces_data[space_idx].id;
+                        let current_title = &state.spaces_data[space_idx].title;
+                        let input_text = self.view.text_input(id!(space_title_input)).text();
+                        
+                        if input_text.trim() != current_title && !input_text.trim().is_empty() {
+                            println!("SpaceColumn: 失去焦点更新空间标题: '{}' -> '{}' (空间ID: {})", current_title, input_text.trim(), space_id);
+                            // 设置待更新的空间标题
+                            state.pending_space_update = Some((space_id, input_text.trim().to_string()));
+                        }
+                    }
+                }
+            }
+            */
+        }
+        
+        // 处理鼠标点击事件，用于调试焦点问题
+        if let Event::MouseDown(_) = event {
+            println!("SpaceColumn: 检测到鼠标点击事件");
         }
         
         // 处理添加卡片按钮点击事件
@@ -123,7 +154,7 @@ impl Widget for SpaceColumn {
                 
                 // 使用存储的space_idx
                 if let Some(space_idx) = self.space_idx {
-                    let state = scope.data.get_mut::<crate::app::State>().unwrap();
+                    let state = scope.data.get_mut::<State>().unwrap();
                     
                     if space_idx < state.spaces_data.len() {
                         let space_id = state.spaces_data[space_idx].id;
@@ -172,7 +203,7 @@ impl Widget for SpaceList {
 
     fn draw_walk(&mut self, cx: &mut Cx2d, scope: &mut Scope, walk: Walk) -> DrawStep {
         while let Some(item) = self.view.draw_walk(cx, scope, walk).step() {
-            let state = scope.data.get_mut::<crate::app::State>().unwrap();
+            let state = scope.data.get_mut::<State>().unwrap();
 
             if let Some(mut list) = item.as_portal_list().borrow_mut() {
                 list.set_item_range(cx, 0, state.spaces_data.len());
@@ -185,10 +216,13 @@ impl Widget for SpaceList {
                     let space_item = list.item(cx, space_idx, live_id!(Space));
                     let space = &state.spaces_data[space_idx];
 
-                    // 设置空间标题输入框
-                    space_item
-                        .text_input(id!(space_title_input))
-                        .set_text(cx, &space.title);
+                    // 只在需要时设置空间标题输入框的文本（避免覆盖用户输入）
+                    let current_text = space_item.text_input(id!(space_title_input)).text();
+                    if current_text.is_empty() || current_text == "空间标题" {
+                        space_item
+                            .text_input(id!(space_title_input))
+                            .set_text(cx, &space.title);
+                    }
 
                     // 设置背景颜色
                     let colors = [
@@ -223,77 +257,4 @@ impl Widget for SpaceList {
     }
 }
 
-// DTO 定义
-#[derive(Clone, Deserialize, Debug)]
-pub struct TagDto {
-    pub id: i64,
-    pub title: String,
-    pub color: Option<String>,
-}
 
-#[derive(Clone, Deserialize, Debug)]
-pub struct CardDto {
-    pub id: i64,
-    pub title: String,
-    pub description: Option<String>,
-    pub status: Option<bool>,
-    #[serde(rename = "endTime")]
-    pub end_time: Option<String>,
-    pub tags: Vec<TagDto>,
-}
-
-#[derive(Clone, Deserialize, Debug)]
-pub struct SpaceDto {
-    pub id: i64,
-    pub title: String,
-    #[serde(rename = "userId")]
-    pub user_id: String,
-    pub canceled: Option<bool>,
-    pub sort: Option<i32>,
-    pub color: Option<String>,
-    #[serde(rename = "sortBy")]
-    pub sort_by: Option<String>,
-    pub cards: Vec<CardDto>,
-}
-
-// 创建 Space 的请求数据结构
-#[derive(Serialize, Debug)]
-pub struct CreateSpaceRequest {
-    pub title: String,
-    #[serde(rename = "userId")]
-    pub user_id: String,
-    pub canceled: Option<bool>,
-    pub sort: Option<i32>,
-    pub color: Option<String>,
-    #[serde(rename = "sortBy")]
-    pub sort_by: Option<String>,
-}
-
-// 创建卡片的请求数据结构
-#[derive(Serialize, Debug)]
-pub struct CreateCardRequest {
-    pub title: String,
-    pub description: Option<String>,
-    pub status: Option<bool>,
-    pub space: SpaceReference,
-}
-
-// 空间引用结构（用于创建卡片时引用空间）
-#[derive(Serialize, Debug)]
-pub struct SpaceReference {
-    pub id: i64,
-}
-
-// 更新卡片的请求数据结构
-#[derive(Serialize, Debug)]
-pub struct UpdateCardRequest {
-    pub title: String,
-    pub description: Option<String>,
-    pub status: Option<bool>,
-}
-
-// 更新空间的请求数据结构
-#[derive(Serialize, Debug)]
-pub struct UpdateSpaceRequest {
-    pub title: String,
-}

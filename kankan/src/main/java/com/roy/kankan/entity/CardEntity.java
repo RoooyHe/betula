@@ -38,10 +38,10 @@ public class CardEntity {
   private SpaceEntity space;
 
   @JsonIgnore
-  @OneToMany(mappedBy = "card", cascade = CascadeType.ALL)
+  @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private List<TodoEntity> todos;
 
   @JsonIgnore
-  @OneToMany(mappedBy = "card", cascade = CascadeType.ALL)
+  @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private List<ActiveEntity> active;
 }

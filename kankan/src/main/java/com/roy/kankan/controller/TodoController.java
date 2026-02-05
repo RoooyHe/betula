@@ -42,6 +42,7 @@ public class TodoController {
         .map(
             todo -> {
               todo.setTitle(todoDetails.getTitle());
+              todo.setCompleted(todoDetails.getCompleted());
               todo.setEndTime(todoDetails.getEndTime());
               todo.setUserId(todoDetails.getUserId());
               todo.setParentId(todoDetails.getParentId());

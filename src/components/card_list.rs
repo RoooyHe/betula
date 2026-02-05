@@ -1,4 +1,5 @@
 use makepad_widgets::*;
+use crate::models::State;
 
 live_design! {
     use link::theme::*;
@@ -49,6 +50,9 @@ live_design! {
                         draw_bg: {
                             color: #FFFFFFFF
                         }
+                        draw_cursor: {
+                            color: #333333FF
+                        }
                     }
                 }
                 
@@ -82,7 +86,7 @@ impl Widget for CardList {
         if let Event::Actions(actions) = event {
             // 处理新卡片输入框文本变化事件（用于实时更新状态）
             if let Some(text) = self.view.text_input(id!(new_card_text_input)).changed(actions) {
-                let state = scope.data.get_mut::<crate::app::State>().unwrap();
+                let state = scope.data.get_mut::<State>().unwrap();
                 
                 // 使用存储的space_idx
                 let space_id = if let Some(space_idx) = self.space_idx {
@@ -113,7 +117,7 @@ impl Widget for CardList {
             // 处理回车键创建新卡片
             if let Some((text, _)) = self.view.text_input(id!(new_card_text_input)).returned(actions) {
                 if !text.trim().is_empty() {
-                    let state = scope.data.get_mut::<crate::app::State>().unwrap();
+                    let state = scope.data.get_mut::<State>().unwrap();
                     
                     // 使用存储的space_idx
                     let space_id = if let Some(space_idx) = self.space_idx {
@@ -144,6 +148,46 @@ impl Widget for CardList {
                     state.new_card_inputs.remove(&space_id);
                 }
             }
+            
+            // 处理新卡片输入框失去焦点
+            // 注意：Makepad 可能没有直接的 focus_lost 方法，我们可以通过其他方式检测
+            // 暂时注释掉，使用其他方法
+            /*
+            if self.view.text_input(id!(new_card_text_input)).focus_lost(actions) {
+                let state = scope.data.get_mut::<State>().unwrap();
+                let input_text = self.view.text_input(id!(new_card_text_input)).text();
+                
+                if !input_text.trim().is_empty() {
+                    // 使用存储的space_idx
+                    let space_id = if let Some(space_idx) = self.space_idx {
+                        if space_idx < state.spaces_data.len() {
+                            state.spaces_data[space_idx].id
+                        } else {
+                            println!("CardList: space_idx {} 超出范围，使用第一个空间", space_idx);
+                            if !state.spaces_data.is_empty() {
+                                state.spaces_data[0].id
+                            } else {
+                                return; // 没有空间数据，直接返回
+                            }
+                        }
+                    } else {
+                        println!("CardList: space_idx 未设置，使用第一个空间");
+                        if !state.spaces_data.is_empty() {
+                            state.spaces_data[0].id
+                        } else {
+                            return; // 没有空间数据，直接返回
+                        }
+                    };
+                    
+                    println!("新卡片输入框失去焦点，创建卡片: '{}' 到空间: {}", input_text.trim(), space_id);
+                    // 设置待创建的卡片
+                    state.pending_create_card = Some((space_id, input_text.trim().to_string()));
+                    // 清空输入框并隐藏
+                    self.view.text_input(id!(new_card_text_input)).set_text(cx, "");
+                    state.new_card_inputs.remove(&space_id);
+                }
+            }
+            */
         }
     }
 
@@ -155,7 +199,7 @@ impl Widget for CardList {
         
         // 先获取需要的数据
         let (_space_idx, _space_id, has_new_input, current_text, cards_data) = {
-            let state = scope.data.get_mut::<crate::app::State>().unwrap();
+            let state = scope.data.get_mut::<State>().unwrap();
             
             // 使用存储的space_idx
             let (space_idx, space_id) = if let Some(space_idx) = self.space_idx {
@@ -220,10 +264,13 @@ impl Widget for CardList {
                     
                     println!("渲染卡片 {}: {}", card_idx, card.title);
 
-                    // 设置卡片标题输入框
-                    card_item
-                        .text_input(id!(card_title_input))
-                        .set_text(cx, &card.title);
+                    // 只在需要时设置卡片标题输入框的文本（避免覆盖用户输入）
+                    let current_text = card_item.text_input(id!(card_title_input)).text();
+                    if current_text.is_empty() || current_text == "卡片标题" {
+                        card_item
+                            .text_input(id!(card_title_input))
+                            .set_text(cx, &card.title);
+                    }
 
                     // 设置标签信息
                     let tags_text = if card.tags.is_empty() {
@@ -240,7 +287,7 @@ impl Widget for CardList {
                         .set_text(cx, &format!("标签: {}", tags_text));
 
                     // 为CardItem传递card_id
-                    let mut card_scope = Scope::with_data_props(scope.data.get_mut::<crate::app::State>().unwrap(), &card.id);
+                    let mut card_scope = Scope::with_data_props(scope.data.get_mut::<State>().unwrap(), &card.id);
                     card_item.draw_all(cx, &mut card_scope);
                 }
             }

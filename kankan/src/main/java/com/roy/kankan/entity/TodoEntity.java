@@ -16,6 +16,8 @@ public class TodoEntity {
 
   private String title;
 
+  private Boolean completed;
+
   private LocalDateTime endTime;
 
   private String userId;

@@ -1,5 +1,6 @@
 package com.roy.kankan.controller;
 
+import com.roy.kankan.dto.CardDetailDto;
 import com.roy.kankan.entity.CardEntity;
 import com.roy.kankan.repository.CardRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,14 @@ public class CardController {
     return cardRepository
         .findById(id)
         .map(ResponseEntity::ok)
+        .orElse(ResponseEntity.notFound().build());
+  }
+
+  @GetMapping("/{id}/detail")
+  public ResponseEntity<CardDetailDto> getCardDetailById(@PathVariable Long id) {
+    return cardRepository
+        .findById(id)
+        .map(card -> ResponseEntity.ok(CardDetailDto.fromEntity(card)))
         .orElse(ResponseEntity.notFound().build());
   }
 
