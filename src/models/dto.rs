@@ -145,3 +145,13 @@ pub struct UpdateTodoRequest {
     #[serde(rename = "endTime")]
     pub end_time: Option<String>,
 }
+
+#[derive(Serialize, Debug)]
+pub struct CreateActiveRequest {
+    pub title: String,
+    #[serde(rename = "userId")]
+    pub user_id: String,
+    #[serde(rename = "startTime")]
+    pub start_time: Option<String>,
+    pub card: CardReference,
+}

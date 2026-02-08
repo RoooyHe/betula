@@ -468,4 +468,77 @@ impl ApiService {
             signal.set();
         });
     }
+
+    // 创建新Active
+    pub fn create_active(card_id: i64, title: String, tx: Sender<bool>, signal: SignalToUI) {
+        std::thread::spawn(move || {
+            let create_request = CreateActiveRequest {
+                title: title.clone(),
+                user_id: Self::USER_ID.to_string(),
+                start_time: Some(chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S").to_string()),
+                card: CardReference { id: card_id },
+            };
+
+            println!("API: 创建Active，标题: '{}', 卡片ID: {}", title, card_id);
+
+            let client = reqwest::blocking::Client::new();
+            let url = format!("{}/active", Self::BASE_URL);
+            let request = client
+                .post(&url)
+                .header("Content-Type", "application/json")
+                .json(&create_request)
+                .send();
+
+            match request {
+                Ok(response) => {
+                    let status = response.status();
+                    println!("API: 创建Active响应状态: {}", status);
+                    
+                    if status.is_success() {
+                        let _ = tx.send(true);
+                    } else {
+                        println!("API: 创建Active失败，状态码: {}", status);
+                        let _ = tx.send(false);
+                    }
+                }
+                Err(e) => {
+                    println!("API: 创建Active请求错误: {}", e);
+                    let _ = tx.send(false);
+                }
+            }
+
+            signal.set();
+        });
+    }
+
+    // 删除Active
+    pub fn delete_active(active_id: i64, tx: Sender<bool>, signal: SignalToUI) {
+        std::thread::spawn(move || {
+            println!("API: 删除Active，ID: {}", active_id);
+
+            let client = reqwest::blocking::Client::new();
+            let url = format!("{}/active/{}", Self::BASE_URL, active_id);
+            let request = client.delete(&url).send();
+
+            match request {
+                Ok(response) => {
+                    let status = response.status();
+                    println!("API: 删除Active响应状态: {}", status);
+                    
+                    if status.is_success() {
+                        let _ = tx.send(true);
+                    } else {
+                        println!("API: 删除Active失败，状态码: {}", status);
+                        let _ = tx.send(false);
+                    }
+                }
+                Err(e) => {
+                    println!("API: 删除Active请求错误: {}", e);
+                    let _ = tx.send(false);
+                }
+            }
+
+            signal.set();
+        });
+    }
 }

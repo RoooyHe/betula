@@ -15,11 +15,11 @@ public class ActiveEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  private String title;
+
   private String userId;
 
-  private LocalDateTime occurrenceTime;
-
-  private String active;
+  private LocalDateTime startTime;
 
   private Boolean hidden;
 

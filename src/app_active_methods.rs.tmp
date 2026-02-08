@@ -1,0 +1,122 @@
+    // Active 管理方法
+    fn create_new_active(&mut self, title: String) {
+        if let Some(card_detail) = &self.state.card_detail_data {
+            let (tx, rx) = std::sync::mpsc::channel();
+            let signal = self.state.create_active_signal.clone();
+            self.state.create_active_rx = Some(rx);
+
+            println!("create_new_active: 创建新Active '{}'", title);
+
+            // 使用新的 ApiService
+            ApiService::create_active(card_detail.id, title, tx, signal);
+        }
+    }
+
+    fn delete_active(&mut self, active_id: i64) {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let signal = self.state.delete_active_signal.clone();
+        self.state.delete_active_rx = Some(rx);
+
+        println!("delete_active: 删除Active {}", active_id);
+
+        // 使用新的 ApiService
+        ApiService::delete_active(active_id, tx, signal);
+    }
+
+    fn update_active_items(&mut self, cx: &mut Cx, actives: &[ActiveDto]) {
+        // 清空Active项
+        self.state.active_items = [None, None, None];
+        
+        // Active项ID列表
+        let active_item_ids = [
+            (id!(active_item_1), id!(active_text_1), id!(active_time_1), id!(active_delete_1)),
+            (id!(active_item_2), id!(active_text_2), id!(active_time_2), id!(active_delete_2)),
+            (id!(active_item_3), id!(active_text_3), id!(active_time_3), id!(active_delete_3)),
+        ];
+        
+        // 更新每个Active项
+        for (index, (item_id, text_id, time_id, _delete_id)) in active_item_ids.iter().enumerate() {
+            if let Some(active) = actives.get(index) {
+                // 显示Active项
+                self.ui.view(*item_id).set_visible(cx, true);
+                
+                // 设置Active文本
+                self.ui.label(*text_id).set_text(cx, &active.title);
+                
+                // 设置时间文本
+                let time_text = if let Some(start_time) = &active.start_time {
+                    format!("开始时间: {}", start_time)
+                } else {
+                    "无开始时间".to_string()
+                };
+                self.ui.label(*time_id).set_text(cx, &time_text);
+                
+                // 存储Active数据
+                self.state.active_items[index] = Some(active.clone());
+                
+                println!("update_active_items: Active {} 设置为 '{}'", 
+                    index + 1, active.title);
+            } else {
+                // 隐藏多余的Active项
+                self.ui.view(*item_id).set_visible(cx, false);
+                self.state.active_items[index] = None;
+            }
+        }
+    }
+
+    fn handle_create_active_signal(&mut self, _cx: &mut Cx) {
+        if !self.state.create_active_signal.check_and_clear() {
+            return;
+        }
+
+        println!("handle_create_active_signal: 收到创建Active信号");
+
+        let mut received_results = Vec::new();
+        if let Some(rx) = &self.state.create_active_rx {
+            while let Ok(success) = rx.try_recv() {
+                println!("handle_create_active_signal: 收到结果: {}", success);
+                received_results.push(success);
+            }
+        }
+
+        for success in received_results {
+            if success {
+                println!("handle_create_active_signal: Active创建成功，刷新卡片详情");
+                if let Some(card_detail) = &self.state.card_detail_data {
+                    self.fetch_card_detail(card_detail.id); // 重新获取卡片详情
+                }
+                // 清空输入框
+                self.state.new_active_input.clear();
+                self.state.show_new_active_input = false;
+            } else {
+                println!("handle_create_active_signal: Active创建失败");
+            }
+        }
+    }
+
+    fn handle_delete_active_signal(&mut self, _cx: &mut Cx) {
+        if !self.state.delete_active_signal.check_and_clear() {
+            return;
+        }
+
+        println!("handle_delete_active_signal: 收到删除Active信号");
+
+        let mut received_results = Vec::new();
+        if let Some(rx) = &self.state.delete_active_rx {
+            while let Ok(success) = rx.try_recv() {
+                println!("handle_delete_active_signal: 收到结果: {}", success);
+                received_results.push(success);
+            }
+        }
+
+        for success in received_results {
+            if success {
+                println!("handle_delete_active_signal: Active删除成功，刷新卡片详情");
+                if let Some(card_detail) = &self.state.card_detail_data {
+                    self.fetch_card_detail(card_detail.id); // 重新获取卡片详情
+                }
+            } else {
+                println!("handle_delete_active_signal: Active删除失败");
+            }
+        }
+    }

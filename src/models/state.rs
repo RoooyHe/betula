@@ -1,4 +1,4 @@
-use super::dto::{SpaceDto, CardDetailDto, TagDto, TodoDto};
+use super::dto::{SpaceDto, CardDetailDto, TagDto, TodoDto, ActiveDto};
 use makepad_widgets::*;
 use std::sync::mpsc::Receiver;
 
@@ -83,6 +83,17 @@ pub struct State {
     pub pending_create_todo: Option<String>,
     pub pending_toggle_todo: Option<(i64, bool)>, // (todo_id, completed)
     pub pending_delete_todo: Option<i64>,
+
+    // Active管理
+    pub active_items: [Option<ActiveDto>; 3], // 最多显示3个Active
+    pub create_active_signal: SignalToUI,
+    pub create_active_rx: Option<Receiver<bool>>,
+    pub delete_active_signal: SignalToUI,
+    pub delete_active_rx: Option<Receiver<bool>>,
+    pub new_active_input: String,
+    pub show_new_active_input: bool,
+    pub pending_create_active: Option<String>,
+    pub pending_delete_active: Option<i64>,
 }
 
 impl Default for State {
@@ -167,6 +178,17 @@ impl Default for State {
             pending_create_todo: None,
             pending_toggle_todo: None,
             pending_delete_todo: None,
+
+            // Active管理
+            active_items: [None, None, None],
+            create_active_signal: SignalToUI::default(),
+            create_active_rx: None,
+            delete_active_signal: SignalToUI::default(),
+            delete_active_rx: None,
+            new_active_input: String::new(),
+            show_new_active_input: false,
+            pending_create_active: None,
+            pending_delete_active: None,
         }
     }
 }

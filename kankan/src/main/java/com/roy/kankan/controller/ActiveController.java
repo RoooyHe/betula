@@ -41,9 +41,9 @@ public class ActiveController {
         .findById(id)
         .map(
             active -> {
+              active.setTitle(activeDetails.getTitle());
               active.setUserId(activeDetails.getUserId());
-              active.setOccurrenceTime(activeDetails.getOccurrenceTime());
-              active.setActive(activeDetails.getActive());
+              active.setStartTime(activeDetails.getStartTime());
               active.setHidden(activeDetails.getHidden());
               return ResponseEntity.ok(activeRepository.save(active));
             })
