@@ -156,8 +156,13 @@ impl Widget for CardItem {
             if self.view.button(id!(detail_btn)).clicked(actions) {
                 if let Some(card_id) = self.card_id {
                     let state = scope.data.get_mut::<State>().unwrap();
-                    println!("CardItem: 查看卡片详情 {}", card_id);
+                    println!("CardItem: 详情按钮被点击！卡片ID: {}", card_id);
                     state.pending_detail_card_id = Some(card_id);
+                    println!("CardItem: pending_detail_card_id 已设置为: {:?}", state.pending_detail_card_id);
+                    // 触发重绘以确保事件被处理
+                    cx.redraw_all();
+                } else {
+                    println!("CardItem: 详情按钮被点击，但 card_id 为 None！");
                 }
             }
             

@@ -207,6 +207,49 @@ impl ApiService {
         });
     }
 
+    // 更新卡片描述
+    pub fn update_card_description(
+        card_id: i64, 
+        title: String,  // 保持原标题
+        new_description: String, 
+        status: Option<bool>,  // 保持原状态
+        tx: Sender<bool>, 
+        signal: SignalToUI
+    ) {
+        std::thread::spawn(move || {
+            let update_card = UpdateCardRequest {
+                title,  // 使用原标题
+                description: Some(new_description),
+                status,  // 使用原状态
+            };
+
+            let client = reqwest::blocking::Client::new();
+            let url = format!("{}/card/{}", Self::BASE_URL, card_id);
+            println!("API: 更新卡片描述 URL: {}", url);
+            
+            let request = client
+                .put(&url)
+                .header("Content-Type", "application/json")
+                .json(&update_card)
+                .send();
+
+            match request {
+                Ok(response) => {
+                    let status = response.status();
+                    println!("API: 更新卡片描述响应状态: {}", status);
+                    let success = status.is_success();
+                    let _ = tx.send(success);
+                }
+                Err(e) => {
+                    println!("API: 更新卡片描述失败: {}", e);
+                    let _ = tx.send(false);
+                }
+            }
+
+            signal.set();
+        });
+    }
+
     // 删除卡片
     pub fn delete_card(card_id: i64, tx: Sender<bool>, signal: SignalToUI) {
         std::thread::spawn(move || {

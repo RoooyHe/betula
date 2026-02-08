@@ -60,9 +60,6 @@ pub struct State {
     pub card_tags_update_signal: SignalToUI,
     pub card_tags_update_rx: Option<Receiver<bool>>,
     
-    // 标签按钮ID映射 (按钮索引 -> 标签ID)
-    pub tag_button_ids: [Option<i64>; 10],
-    
     // 新增标签
     pub new_tag_input: String,
     pub show_new_tag_input: bool,
@@ -70,8 +67,8 @@ pub struct State {
     pub create_tag_rx: Option<Receiver<bool>>,
     pub pending_create_tag: Option<String>,
 
-    // Todo管理
-    pub todo_items: [Option<TodoDto>; 5], // 最多显示5个Todo
+    // Todo管理 - 使用 Vec 支持 PortalList
+    pub current_todos: Vec<TodoDto>,
     pub create_todo_signal: SignalToUI,
     pub create_todo_rx: Option<Receiver<bool>>,
     pub update_todo_signal: SignalToUI,
@@ -84,8 +81,8 @@ pub struct State {
     pub pending_toggle_todo: Option<(i64, bool)>, // (todo_id, completed)
     pub pending_delete_todo: Option<i64>,
 
-    // Active管理
-    pub active_items: [Option<ActiveDto>; 3], // 最多显示3个Active
+    // Active管理 - 使用 Vec 支持 PortalList
+    pub current_actives: Vec<ActiveDto>,
     pub create_active_signal: SignalToUI,
     pub create_active_rx: Option<Receiver<bool>>,
     pub delete_active_signal: SignalToUI,
@@ -155,9 +152,6 @@ impl Default for State {
             card_tags_update_signal: SignalToUI::default(),
             card_tags_update_rx: None,
             
-            // 标签按钮ID映射
-            tag_button_ids: [None; 10],
-            
             // 新增标签
             new_tag_input: String::new(),
             show_new_tag_input: false,
@@ -166,7 +160,7 @@ impl Default for State {
             pending_create_tag: None,
 
             // Todo管理
-            todo_items: [None, None, None, None, None],
+            current_todos: Vec::new(),
             create_todo_signal: SignalToUI::default(),
             create_todo_rx: None,
             update_todo_signal: SignalToUI::default(),
@@ -180,7 +174,7 @@ impl Default for State {
             pending_delete_todo: None,
 
             // Active管理
-            active_items: [None, None, None],
+            current_actives: Vec::new(),
             create_active_signal: SignalToUI::default(),
             create_active_rx: None,
             delete_active_signal: SignalToUI::default(),

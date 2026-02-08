@@ -9,6 +9,7 @@ live_design! {
     use link::theme::*;
     use link::widgets::*;
     use crate::components::space::SpaceList;
+    use crate::components::card_modal::*;
 
     App = {{App}} {
         ui: <Root> {
@@ -54,922 +55,8 @@ live_design! {
                         }
                     }
 
-                    // 卡片详情模态框
-                    card_detail_modal = <Modal> {
-                        content: {
-                            width: Fill,
-                            height: Fill,
-                            flow: Overlay,
-                            align: {x: 0.5, y: 0.5}
-
-                            <View> {
-                                width: Fill,
-                                height: Fill,
-                                draw_bg: {
-                                    fn pixel(self) -> vec4 {
-                                        return vec4(0.0, 0.0, 0.0, 0.7)
-                                    }
-                                }
-                            }
-
-                            <RoundedView> {
-                                width: 600,
-                                height: 500,
-                                padding: 20,
-                                flow: Down,
-                                spacing: 15,
-                                draw_bg: {
-                                    color: #FFFFFF
-                                }
-
-                                <View> {
-                                    width: Fill,
-                                    height: Fit,
-                                    flow: Right,
-                                    align: {y: 0.5}
-
-                                    <Label> {
-                                        width: Fill,
-                                        height: Fit,
-                                        text: "卡片详情"
-                                        draw_text: {
-                                            color: #333333
-                                            text_style: {
-                                                font_size: 20.0
-                                            }
-                                        }
-                                    }
-
-                                    close_button = <Button> {
-                                        width: 30,
-                                        height: 30,
-                                        text: "×"
-                                        draw_bg: {
-                                            color: #xFF6B6B
-                                        }
-                                        draw_text: {
-                                            color: #FFFFFF
-                                            text_style: {
-                                                font_size: 18.0
-                                            }
-                                        }
-                                    }
-                                }
-
-                                <ScrollYView> {
-                                    width: Fill,
-                                    height: Fill,
-                                    scroll_bars: <ScrollBars> {
-                                        show_scroll_y: true
-                                    }
-
-                                    <View> {
-                                        width: Fill,
-                                        height: Fit,
-                                        flow: Down,
-                                        spacing: 15,
-
-                                        <View> {
-                                            width: Fill,
-                                            height: Fit,
-                                            flow: Down,
-                                            spacing: 5,
-
-                                            <Label> {
-                                                width: Fill,
-                                                height: Fit,
-                                                text: "标题"
-                                                draw_text: {
-                                                    color: #666666
-                                                    text_style: {
-                                                        font_size: 14.0
-                                                    }
-                                                }
-                                            }
-
-                                            card_title = <Label> {
-                                                width: Fill,
-                                                height: Fit,
-                                                text: "卡片标题"
-                                                draw_text: {
-                                                    color: #333333
-                                                    text_style: {
-                                                        font_size: 16.0
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        <View> {
-                                            width: Fill,
-                                            height: Fit,
-                                            flow: Down,
-                                            spacing: 5,
-
-                                            <Label> {
-                                                width: Fill,
-                                                height: Fit,
-                                                text: "描述"
-                                                draw_text: {
-                                                    color: #666666
-                                                    text_style: {
-                                                        font_size: 14.0
-                                                    }
-                                                }
-                                            }
-
-                                            card_description = <Label> {
-                                                width: Fill,
-                                                height: Fit,
-                                                text: "暂无描述"
-                                                draw_text: {
-                                                    color: #333333
-                                                    text_style: {
-                                                        font_size: 14.0
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        <View> {
-                                            width: Fill,
-                                            height: Fit,
-                                            flow: Down,
-                                            spacing: 5,
-
-                                            <Label> {
-                                                width: Fill,
-                                                height: Fit,
-                                                text: "状态"
-                                                draw_text: {
-                                                    color: #666666
-                                                    text_style: {
-                                                        font_size: 14.0
-                                                    }
-                                                }
-                                            }
-
-                                            card_status = <Label> {
-                                                width: Fill,
-                                                height: Fit,
-                                                text: "进行中"
-                                                draw_text: {
-                                                    color: #333333
-                                                    text_style: {
-                                                        font_size: 14.0
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        <View> {
-                                            width: Fill,
-                                            height: Fit,
-                                            flow: Down,
-                                            spacing: 5,
-
-                                            <Label> {
-                                                width: Fill,
-                                                height: Fit,
-                                                text: "标签"
-                                                draw_text: {
-                                                    color: #666666
-                                                    text_style: {
-                                                        font_size: 14.0
-                                                    }
-                                                }
-                                            }
-
-                                            <View> {
-                                                width: Fill,
-                                                height: Fit,
-                                                flow: Right,
-                                                spacing: 10,
-                                                align: {y: 0.5}
-
-                                                card_tags = <Label> {
-                                                    width: Fill,
-                                                    height: Fit,
-                                                    text: "暂无标签"
-                                                    draw_text: {
-                                                        color: #333333
-                                                        text_style: {
-                                                            font_size: 14.0
-                                                        }
-                                                    }
-                                                }
-
-                                                add_tag_button = <Button> {
-                                                    width: 80,
-                                                    height: 30,
-                                                    text: "添加标签"
-                                                    draw_bg: {
-                                                        color: #x4ECDC4
-                                                    }
-                                                    draw_text: {
-                                                        color: #FFFFFF
-                                                        text_style: {
-                                                            font_size: 12.0
-                                                        }
-                                                    }
-                                                }
-                                            }
-
-                                            tag_dropdown = <View> {
-                                                width: Fill,
-                                                height: Fit,
-                                                flow: Down,
-                                                spacing: 5,
-                                                visible: false,
-
-                                                <Label> {
-                                                    width: Fill,
-                                                    height: Fit,
-                                                    text: "选择标签:"
-                                                    draw_text: {
-                                                        color: #666666
-                                                        text_style: {
-                                                            font_size: 12.0
-                                                        }
-                                                    }
-                                                }
-
-                                                // 动态标签列表区域
-                                                existing_tags = <View> {
-                                                    width: Fill,
-                                                    height: Fit,
-                                                    flow: Down,
-                                                    spacing: 3,
-
-                                                    tag_btn_1 = <Button> {
-                                                        width: Fill,
-                                                        height: 25,
-                                                        text: "",
-                                                        visible: false,
-                                                        draw_bg: {
-                                                            color: #9FE7B4
-                                                        }
-                                                        draw_text: {
-                                                            color: #333333
-                                                            text_style: {
-                                                                font_size: 12.0
-                                                            }
-                                                        }
-                                                    }
-
-                                                    tag_btn_2 = <Button> {
-                                                        width: Fill,
-                                                        height: 25,
-                                                        text: "",
-                                                        visible: false,
-                                                        draw_bg: {
-                                                            color: #61BD4F
-                                                        }
-                                                        draw_text: {
-                                                            color: #FFFFFF
-                                                            text_style: {
-                                                                font_size: 12.0
-                                                            }
-                                                        }
-                                                    }
-
-                                                    tag_btn_3 = <Button> {
-                                                        width: Fill,
-                                                        height: 25,
-                                                        text: "",
-                                                        visible: false,
-                                                        draw_bg: {
-                                                            color: #FF6B6B
-                                                        }
-                                                        draw_text: {
-                                                            color: #FFFFFF
-                                                            text_style: {
-                                                                font_size: 12.0
-                                                            }
-                                                        }
-                                                    }
-
-                                                    tag_btn_4 = <Button> {
-                                                        width: Fill,
-                                                        height: 25,
-                                                        text: "",
-                                                        visible: false,
-                                                        draw_bg: {
-                                                            color: #x4ECDC4
-                                                        }
-                                                        draw_text: {
-                                                            color: #FFFFFF
-                                                            text_style: {
-                                                                font_size: 12.0
-                                                            }
-                                                        }
-                                                    }
-
-                                                    tag_btn_5 = <Button> {
-                                                        width: Fill,
-                                                        height: 25,
-                                                        text: "",
-                                                        visible: false,
-                                                        draw_bg: {
-                                                            color: #45B7D1
-                                                        }
-                                                        draw_text: {
-                                                            color: #FFFFFF
-                                                            text_style: {
-                                                                font_size: 12.0
-                                                            }
-                                                        }
-                                                    }
-
-                                                    tag_btn_6 = <Button> {
-                                                        width: Fill,
-                                                        height: 25,
-                                                        text: "",
-                                                        visible: false,
-                                                        draw_bg: {
-                                                            color: #FFA07A
-                                                        }
-                                                        draw_text: {
-                                                            color: #333333
-                                                            text_style: {
-                                                                font_size: 12.0
-                                                            }
-                                                        }
-                                                    }
-
-                                                    tag_btn_7 = <Button> {
-                                                        width: Fill,
-                                                        height: 25,
-                                                        text: "",
-                                                        visible: false,
-                                                        draw_bg: {
-                                                            color: #FFD93D
-                                                        }
-                                                        draw_text: {
-                                                            color: #333333
-                                                            text_style: {
-                                                                font_size: 12.0
-                                                            }
-                                                        }
-                                                    }
-
-                                                    tag_btn_8 = <Button> {
-                                                        width: Fill,
-                                                        height: 25,
-                                                        text: "",
-                                                        visible: false,
-                                                        draw_bg: {
-                                                            color: #6BCF7F
-                                                        }
-                                                        draw_text: {
-                                                            color: #FFFFFF
-                                                            text_style: {
-                                                                font_size: 12.0
-                                                            }
-                                                        }
-                                                    }
-
-                                                    tag_btn_9 = <Button> {
-                                                        width: Fill,
-                                                        height: 25,
-                                                        text: "",
-                                                        visible: false,
-                                                        draw_bg: {
-                                                            color: #FF8A80
-                                                        }
-                                                        draw_text: {
-                                                            color: #333333
-                                                            text_style: {
-                                                                font_size: 12.0
-                                                            }
-                                                        }
-                                                    }
-
-                                                    tag_btn_10 = <Button> {
-                                                        width: Fill,
-                                                        height: 25,
-                                                        text: "",
-                                                        visible: false,
-                                                        draw_bg: {
-                                                            color: #81C784
-                                                        }
-                                                        draw_text: {
-                                                            color: #FFFFFF
-                                                            text_style: {
-                                                                font_size: 12.0
-                                                            }
-                                                        }
-                                                    }
-                                                }
-
-                                                // 新增标签区域
-                                                <View> {
-                                                    width: Fill,
-                                                    height: Fit,
-                                                    flow: Down,
-                                                    spacing: 5,
-
-                                                    <View> {
-                                                        width: Fill,
-                                                        height: Fit,
-                                                        flow: Right,
-                                                        spacing: 10,
-                                                        align: {y: 0.5}
-
-                                                        <Label> {
-                                                            width: Fill,
-                                                            height: Fit,
-                                                            text: "新增标签:"
-                                                            draw_text: {
-                                                                color: #666666
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-
-                                                        new_tag_button = <Button> {
-                                                            width: 60,
-                                                            height: 25,
-                                                            text: "新增"
-                                                            draw_bg: {
-                                                                color: #45B7D1
-                                                            }
-                                                            draw_text: {
-                                                                color: #FFFFFF
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-
-                                                    new_tag_input_container = <View> {
-                                                        width: Fill,
-                                                        height: Fit,
-                                                        visible: false,
-
-                                                        new_tag_input = <TextInput> {
-                                                            width: Fill,
-                                                            height: 30,
-                                                            text: "",
-                                                            draw_text: {
-                                                                color: #333333
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                            draw_bg: {
-                                                                color: #F8F9FA
-                                                            }
-                                                            draw_cursor: {
-                                                                color: #333333
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        <View> {
-                                            width: Fill,
-                                            height: Fit,
-                                            flow: Down,
-                                            spacing: 5,
-
-                                            <Label> {
-                                                width: Fill,
-                                                height: Fit,
-                                                text: "待办事项"
-                                                draw_text: {
-                                                    color: #666666
-                                                    text_style: {
-                                                        font_size: 14.0
-                                                    }
-                                                }
-                                            }
-
-                                            <View> {
-                                                width: Fill,
-                                                height: Fit,
-                                                flow: Right,
-                                                spacing: 10,
-                                                align: {y: 0.5}
-
-                                                card_todos = <Label> {
-                                                    width: Fill,
-                                                    height: Fit,
-                                                    text: "暂无待办事项"
-                                                    draw_text: {
-                                                        color: #333333
-                                                        text_style: {
-                                                            font_size: 14.0
-                                                        }
-                                                    }
-                                                }
-
-                                                add_todo_button = <Button> {
-                                                    width: 80,
-                                                    height: 30,
-                                                    text: "添加待办"
-                                                    draw_bg: {
-                                                        color: #45B7D1
-                                                    }
-                                                    draw_text: {
-                                                        color: #FFFFFF
-                                                        text_style: {
-                                                            font_size: 12.0
-                                                        }
-                                                    }
-                                                }
-                                            }
-
-                                            todo_dropdown = <View> {
-                                                width: Fill,
-                                                height: Fit,
-                                                flow: Down,
-                                                spacing: 5,
-                                                visible: false,
-
-                                                <Label> {
-                                                    width: Fill,
-                                                    height: Fit,
-                                                    text: "待办事项管理:"
-                                                    draw_text: {
-                                                        color: #666666
-                                                        text_style: {
-                                                            font_size: 12.0
-                                                        }
-                                                    }
-                                                }
-
-                                                // 现有待办事项列表
-                                                existing_todos = <View> {
-                                                    width: Fill,
-                                                    height: Fit,
-                                                    flow: Down,
-                                                    spacing: 3,
-
-                                                    todo_item_1 = <View> {
-                                                        width: Fill,
-                                                        height: 25,
-                                                        flow: Right,
-                                                        spacing: 5,
-                                                        align: {y: 0.5}
-                                                        visible: false,
-
-                                                        todo_check_1 = <Button> {
-                                                            width: 20,
-                                                            height: 20,
-                                                            text: "○"
-                                                            draw_bg: {
-                                                                color: #F0F0F0
-                                                            }
-                                                            draw_text: {
-                                                                color: #666666
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-
-                                                        todo_text_1 = <Label> {
-                                                            width: Fill,
-                                                            height: Fit,
-                                                            text: ""
-                                                            draw_text: {
-                                                                color: #333333
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-
-                                                        todo_delete_1 = <Button> {
-                                                            width: 20,
-                                                            height: 20,
-                                                            text: "×"
-                                                            draw_bg: {
-                                                                color: #FF6B6B
-                                                            }
-                                                            draw_text: {
-                                                                color: #FFFFFF
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-
-                                                    todo_item_2 = <View> {
-                                                        width: Fill,
-                                                        height: 25,
-                                                        flow: Right,
-                                                        spacing: 5,
-                                                        align: {y: 0.5}
-                                                        visible: false,
-
-                                                        todo_check_2 = <Button> {
-                                                            width: 20,
-                                                            height: 20,
-                                                            text: "○"
-                                                            draw_bg: {
-                                                                color: #F0F0F0
-                                                            }
-                                                            draw_text: {
-                                                                color: #666666
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-
-                                                        todo_text_2 = <Label> {
-                                                            width: Fill,
-                                                            height: Fit,
-                                                            text: ""
-                                                            draw_text: {
-                                                                color: #333333
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-
-                                                        todo_delete_2 = <Button> {
-                                                            width: 20,
-                                                            height: 20,
-                                                            text: "×"
-                                                            draw_bg: {
-                                                                color: #FF6B6B
-                                                            }
-                                                            draw_text: {
-                                                                color: #FFFFFF
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-
-                                                    todo_item_3 = <View> {
-                                                        width: Fill,
-                                                        height: 25,
-                                                        flow: Right,
-                                                        spacing: 5,
-                                                        align: {y: 0.5}
-                                                        visible: false,
-
-                                                        todo_check_3 = <Button> {
-                                                            width: 20,
-                                                            height: 20,
-                                                            text: "○"
-                                                            draw_bg: {
-                                                                color: #F0F0F0
-                                                            }
-                                                            draw_text: {
-                                                                color: #666666
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-
-                                                        todo_text_3 = <Label> {
-                                                            width: Fill,
-                                                            height: Fit,
-                                                            text: ""
-                                                            draw_text: {
-                                                                color: #333333
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-
-                                                        todo_delete_3 = <Button> {
-                                                            width: 20,
-                                                            height: 20,
-                                                            text: "×"
-                                                            draw_bg: {
-                                                                color: #FF6B6B
-                                                            }
-                                                            draw_text: {
-                                                                color: #FFFFFF
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-
-                                                    todo_item_4 = <View> {
-                                                        width: Fill,
-                                                        height: 25,
-                                                        flow: Right,
-                                                        spacing: 5,
-                                                        align: {y: 0.5}
-                                                        visible: false,
-
-                                                        todo_check_4 = <Button> {
-                                                            width: 20,
-                                                            height: 20,
-                                                            text: "○"
-                                                            draw_bg: {
-                                                                color: #F0F0F0
-                                                            }
-                                                            draw_text: {
-                                                                color: #666666
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-
-                                                        todo_text_4 = <Label> {
-                                                            width: Fill,
-                                                            height: Fit,
-                                                            text: ""
-                                                            draw_text: {
-                                                                color: #333333
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-
-                                                        todo_delete_4 = <Button> {
-                                                            width: 20,
-                                                            height: 20,
-                                                            text: "×"
-                                                            draw_bg: {
-                                                                color: #FF6B6B
-                                                            }
-                                                            draw_text: {
-                                                                color: #FFFFFF
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-
-                                                    todo_item_5 = <View> {
-                                                        width: Fill,
-                                                        height: 25,
-                                                        flow: Right,
-                                                        spacing: 5,
-                                                        align: {y: 0.5}
-                                                        visible: false,
-
-                                                        todo_check_5 = <Button> {
-                                                            width: 20,
-                                                            height: 20,
-                                                            text: "○"
-                                                            draw_bg: {
-                                                                color: #F0F0F0
-                                                            }
-                                                            draw_text: {
-                                                                color: #666666
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-
-                                                        todo_text_5 = <Label> {
-                                                            width: Fill,
-                                                            height: Fit,
-                                                            text: ""
-                                                            draw_text: {
-                                                                color: #333333
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-
-                                                        todo_delete_5 = <Button> {
-                                                            width: 20,
-                                                            height: 20,
-                                                            text: "×"
-                                                            draw_bg: {
-                                                                color: #FF6B6B
-                                                            }
-                                                            draw_text: {
-                                                                color: #FFFFFF
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-
-                                                // 新增待办事项区域
-                                                <View> {
-                                                    width: Fill,
-                                                    height: Fit,
-                                                    flow: Down,
-                                                    spacing: 5,
-
-                                                    <View> {
-                                                        width: Fill,
-                                                        height: Fit,
-                                                        flow: Right,
-                                                        spacing: 10,
-                                                        align: {y: 0.5}
-
-                                                        <Label> {
-                                                            width: Fill,
-                                                            height: Fit,
-                                                            text: "新增待办:"
-                                                            draw_text: {
-                                                                color: #666666
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-
-                                                        new_todo_button = <Button> {
-                                                            width: 60,
-                                                            height: 25,
-                                                            text: "新增"
-                                                            draw_bg: {
-                                                                color: #45B7D1
-                                                            }
-                                                            draw_text: {
-                                                                color: #FFFFFF
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-
-                                                    new_todo_input_container = <View> {
-                                                        width: Fill,
-                                                        height: Fit,
-                                                        visible: false,
-
-                                                        new_todo_input = <TextInput> {
-                                                            width: Fill,
-                                                            height: 30,
-                                                            text: "",
-                                                            draw_text: {
-                                                                color: #333333
-                                                                text_style: {
-                                                                    font_size: 12.0
-                                                                }
-                                                            }
-                                                            draw_bg: {
-                                                                color: #F8F9FA
-                                                            }
-                                                            draw_cursor: {
-                                                                color: #333333
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        <View> {
-                                            width: Fill,
-                                            height: Fit,
-                                            flow: Down,
-                                            spacing: 5,
-
-                                            <Label> {
-                                                width: Fill,
-                                                height: Fit,
-                                                text: "活动记录"
-                                                draw_text: {
-                                                    color: #666666
-                                                    text_style: {
-                                                        font_size: 14.0
-                                                    }
-                                                }
-                                            }
-
-                                            card_active = <Label> {
-                                                width: Fill,
-                                                height: Fit,
-                                                text: "暂无活动记录"
-                                                draw_text: {
-                                                    color: #333333
-                                                    text_style: {
-                                                        font_size: 14.0
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    // 卡片详情模态框 - 使用组件
+                    card_detail_modal = <CardDetailModal> {}
                 }
             }
         }
@@ -1175,6 +262,27 @@ impl App {
         ApiService::update_card_title(card_id, new_title, tx, signal);
     }
 
+    fn update_card_description(&mut self, card_id: i64, new_description: String) {
+        // 获取当前卡片的完整信息
+        if let Some(card_detail) = &self.state.card_detail_data {
+            let (tx, rx) = std::sync::mpsc::channel();
+            let signal = self.state.card_update_signal.clone();
+            self.state.card_update_rx = Some(rx);
+
+            println!("update_card_description: 更新卡片 {} 的描述", card_id);
+
+            // 使用新的 ApiService，传递完整的卡片信息
+            ApiService::update_card_description(
+                card_id, 
+                card_detail.title.clone(),  // 保持原标题
+                new_description, 
+                card_detail.status,  // 保持原状态
+                tx, 
+                signal
+            );
+        }
+    }
+
     fn handle_space_update_signal(&mut self, _cx: &mut Cx) {
         if !self.state.space_update_signal.check_and_clear() {
             return;
@@ -1233,7 +341,7 @@ impl App {
             self.ui.label(id!(card_title)).set_text(cx, &card_detail.title);
             
             let description = card_detail.description.as_deref().unwrap_or("暂无描述");
-            self.ui.label(id!(card_description)).set_text(cx, description);
+            self.ui.label(id!(card_description_label)).set_text(cx, description);
             
             let status_text = match card_detail.status {
                 Some(true) => "已完成",
@@ -1295,42 +403,16 @@ impl App {
     }
 
     fn update_todo_items(&mut self, cx: &mut Cx, todos: &[TodoDto]) {
-        // 清空Todo项
-        self.state.todo_items = [None, None, None, None, None];
+        // 存储 Todo 数据到 state（用于事件处理和渲染）
+        self.state.current_todos = todos.to_vec();
         
-        // Todo项ID列表
-        let todo_item_ids = [
-            (id!(todo_item_1), id!(todo_check_1), id!(todo_text_1), id!(todo_delete_1)),
-            (id!(todo_item_2), id!(todo_check_2), id!(todo_text_2), id!(todo_delete_2)),
-            (id!(todo_item_3), id!(todo_check_3), id!(todo_text_3), id!(todo_delete_3)),
-            (id!(todo_item_4), id!(todo_check_4), id!(todo_text_4), id!(todo_delete_4)),
-            (id!(todo_item_5), id!(todo_check_5), id!(todo_text_5), id!(todo_delete_5)),
-        ];
-        
-        // 更新每个Todo项
-        for (index, (item_id, check_id, text_id, _delete_id)) in todo_item_ids.iter().enumerate() {
-            if let Some(todo) = todos.get(index) {
-                // 显示Todo项
-                self.ui.view(*item_id).set_visible(cx, true);
-                
-                // 设置复选框状态
-                let check_text = if todo.completed.unwrap_or(false) { "✓" } else { "○" };
-                self.ui.button(*check_id).set_text(cx, check_text);
-                
-                // 设置Todo文本
-                self.ui.label(*text_id).set_text(cx, &todo.title);
-                
-                // 存储Todo数据
-                self.state.todo_items[index] = Some(todo.clone());
-                
-                println!("update_todo_items: Todo {} 设置为 '{}' (完成: {})", 
-                    index + 1, todo.title, todo.completed.unwrap_or(false));
-            } else {
-                // 隐藏多余的Todo项
-                self.ui.view(*item_id).set_visible(cx, false);
-                self.state.todo_items[index] = None;
-            }
+        // 打印 Todo 信息
+        for (index, todo) in todos.iter().enumerate() {
+            println!("update_todo_items: Todo {} - '{}' (完成: {})", 
+                index + 1, todo.title, todo.completed.unwrap_or(false));
         }
+        
+        cx.redraw_all();
     }
 
     fn handle_tags_signal(&mut self, cx: &mut Cx) {
@@ -1365,32 +447,27 @@ impl App {
     }
 
     fn update_tag_buttons(&mut self, cx: &mut Cx) {
-        // 清空按钮ID映射
-        self.state.tag_button_ids = [None; 10];
+        // 标签数据已存储在 self.state.all_tags 中
         
-        // 标签按钮ID列表
-        let button_ids = [
-            id!(tag_btn_1), id!(tag_btn_2), id!(tag_btn_3), id!(tag_btn_4), id!(tag_btn_5),
-            id!(tag_btn_6), id!(tag_btn_7), id!(tag_btn_8), id!(tag_btn_9), id!(tag_btn_10)
-        ];
-        
-        // 更新每个按钮
-        for (index, button_id) in button_ids.iter().enumerate() {
-            if let Some(tag) = self.state.all_tags.get(index) {
-                // 显示按钮并设置文本
-                self.ui.button(*button_id).set_text(cx, &tag.title);
-                self.ui.button(*button_id).set_visible(cx, true);
-                
-                // 记录按钮对应的标签ID
-                self.state.tag_button_ids[index] = Some(tag.id);
-                
-                println!("update_tag_buttons: 按钮 {} 设置为标签 '{}' (ID: {})", index + 1, tag.title, tag.id);
-            } else {
-                // 隐藏多余的按钮
-                self.ui.button(*button_id).set_visible(cx, false);
-                self.state.tag_button_ids[index] = None;
-            }
+        // 打印标签信息
+        for (index, tag) in self.state.all_tags.iter().enumerate() {
+            println!("update_tag_buttons: 标签 {} - '{}' (ID: {})", index + 1, tag.title, tag.id);
         }
+        
+        // 更新固定的 3 个标签按钮文本
+        if self.state.all_tags.len() > 0 {
+            self.ui.button(id!(tag_button_1)).set_text(cx, &self.state.all_tags[0].title);
+        }
+        if self.state.all_tags.len() > 1 {
+            self.ui.button(id!(tag_button_2)).set_text(cx, &self.state.all_tags[1].title);
+        }
+        if self.state.all_tags.len() > 2 {
+            self.ui.button(id!(tag_button_3)).set_text(cx, &self.state.all_tags[2].title);
+        }
+        
+        println!("update_tag_buttons: 已更新 {} 个标签按钮", self.state.all_tags.len().min(3));
+        
+        cx.redraw_all();
     }
 
     fn handle_card_tags_update_signal(&mut self, _cx: &mut Cx) {
@@ -1638,44 +715,16 @@ impl App {
     }
 
     fn update_active_items(&mut self, cx: &mut Cx, actives: &[ActiveDto]) {
-        // 清空Active项
-        self.state.active_items = [None, None, None];
+        // 存储 Active 数据到 state（用于事件处理和渲染）
+        self.state.current_actives = actives.to_vec();
         
-        // Active项ID列表
-        let active_item_ids = [
-            (id!(active_item_1), id!(active_text_1), id!(active_time_1), id!(active_delete_1)),
-            (id!(active_item_2), id!(active_text_2), id!(active_time_2), id!(active_delete_2)),
-            (id!(active_item_3), id!(active_text_3), id!(active_time_3), id!(active_delete_3)),
-        ];
-        
-        // 更新每个Active项
-        for (index, (item_id, text_id, time_id, _delete_id)) in active_item_ids.iter().enumerate() {
-            if let Some(active) = actives.get(index) {
-                // 显示Active项
-                self.ui.view(*item_id).set_visible(cx, true);
-                
-                // 设置Active文本
-                self.ui.label(*text_id).set_text(cx, &active.title);
-                
-                // 设置时间文本
-                let time_text = if let Some(start_time) = &active.start_time {
-                    format!("开始时间: {}", start_time)
-                } else {
-                    "无开始时间".to_string()
-                };
-                self.ui.label(*time_id).set_text(cx, &time_text);
-                
-                // 存储Active数据
-                self.state.active_items[index] = Some(active.clone());
-                
-                println!("update_active_items: Active {} 设置为 '{}'", 
-                    index + 1, active.title);
-            } else {
-                // 隐藏多余的Active项
-                self.ui.view(*item_id).set_visible(cx, false);
-                self.state.active_items[index] = None;
-            }
+        // 打印 Active 信息
+        for (index, active) in actives.iter().enumerate() {
+            println!("update_active_items: Active {} - '{}' (开始时间: {:?})", 
+                index + 1, active.title, active.start_time);
         }
+        
+        cx.redraw_all();
     }
 
     fn handle_create_active_signal(&mut self, _cx: &mut Cx) {
@@ -1803,10 +852,20 @@ impl AppMain for App {
 
         // 处理卡片详情查看
         if let Some(card_id) = self.state.pending_detail_card_id.take() {
-            println!("查看卡片详情: {}", card_id);
+            println!("App.handle_event: 检测到 pending_detail_card_id = {}", card_id);
+            println!("App.handle_event: 开始获取卡片详情...");
             self.fetch_card_detail(card_id);
             // 打开模态框
-            self.ui.modal(id!(card_detail_modal)).open(cx);
+            println!("App.handle_event: 尝试打开模态框...");
+            
+            // CardDetailModal 本身就是 Modal
+            let modal_ref = self.ui.modal(id!(card_detail_modal));
+            modal_ref.open(cx);
+            println!("App.handle_event: 模态框已调用 open()");
+            
+            // 强制重绘
+            cx.redraw_all();
+            println!("App.handle_event: 已触发 redraw_all()");
         }
 
         // 处理待处理的更新
@@ -1849,15 +908,10 @@ impl AppMain for App {
 
         // 处理Todo状态切换
         if let Some((todo_id, _completed)) = self.state.pending_toggle_todo.take() {
-            // 找到对应的Todo并切换状态
-            for todo_opt in &self.state.todo_items {
-                if let Some(todo) = todo_opt {
-                    if todo.id == todo_id {
-                        println!("切换Todo状态: {}", todo_id);
-                        self.toggle_todo(todo_id, todo.title.clone());
-                        break;
-                    }
-                }
+            // 从 current_todos 中找到对应的 Todo
+            if let Some(todo) = self.state.current_todos.iter().find(|t| t.id == todo_id) {
+                println!("切换Todo状态: {}", todo_id);
+                self.toggle_todo(todo_id, todo.title.clone());
             }
         }
 
@@ -1898,7 +952,9 @@ impl MatchEvent for App {
         // 处理模态框关闭按钮
         if self.ui.button(id!(close_button)).clicked(&actions) {
             println!("关闭卡片详情模态框");
-            self.ui.modal(id!(card_detail_modal)).close(cx);
+            // CardDetailModal 本身就是 Modal
+            let modal_ref = self.ui.modal(id!(card_detail_modal));
+            modal_ref.close(cx);
             // 隐藏标签下拉框
             self.ui.view(id!(tag_dropdown)).set_visible(cx, false);
         }
@@ -1909,6 +965,45 @@ impl MatchEvent for App {
             let dropdown = self.ui.view(id!(tag_dropdown));
             let is_visible = dropdown.visible();
             dropdown.set_visible(cx, !is_visible);
+            cx.redraw_all();
+        }
+
+        // 处理描述编辑按钮
+        if self.ui.button(id!(edit_description_button)).clicked(&actions) {
+            println!("点击编辑描述按钮");
+            // 显示编辑区域，隐藏显示区域
+            self.ui.view(id!(description_edit_container)).set_visible(cx, true);
+            
+            // 将当前描述填充到输入框
+            if let Some(card_detail) = &self.state.card_detail_data {
+                let description = card_detail.description.as_deref().unwrap_or("");
+                self.ui.text_input(id!(card_description_input)).set_text(cx, description);
+            }
+            
+            cx.redraw_all();
+        }
+
+        // 处理保存描述按钮
+        if self.ui.button(id!(save_description_button)).clicked(&actions) {
+            println!("点击保存描述按钮");
+            let description = self.ui.text_input(id!(card_description_input)).text();
+            
+            if let Some(card_detail) = &self.state.card_detail_data {
+                println!("保存描述: '{}'", description);
+                self.update_card_description(card_detail.id, description);
+                
+                // 隐藏编辑区域
+                self.ui.view(id!(description_edit_container)).set_visible(cx, false);
+            }
+            
+            cx.redraw_all();
+        }
+
+        // 处理取消描述编辑按钮
+        if self.ui.button(id!(cancel_description_button)).clicked(&actions) {
+            println!("点击取消描述编辑按钮");
+            // 隐藏编辑区域
+            self.ui.view(id!(description_edit_container)).set_visible(cx, false);
             cx.redraw_all();
         }
 
@@ -1942,23 +1037,34 @@ impl MatchEvent for App {
             }
         }
 
-        // 处理标签按钮点击
-        let button_ids = [
-            id!(tag_btn_1), id!(tag_btn_2), id!(tag_btn_3), id!(tag_btn_4), id!(tag_btn_5),
-            id!(tag_btn_6), id!(tag_btn_7), id!(tag_btn_8), id!(tag_btn_9), id!(tag_btn_10)
-        ];
-        
-        for (index, button_id) in button_ids.iter().enumerate() {
-            if self.ui.button(*button_id).clicked(&actions) {
-                if let Some(tag_id) = self.state.tag_button_ids[index] {
-                    if let Some(card_detail) = &self.state.card_detail_data {
-                        println!("点击标签按钮 {}: 标签ID {}", index + 1, tag_id);
-                        self.add_tag_to_card(card_detail.id, tag_id);
-                        self.ui.view(id!(tag_dropdown)).set_visible(cx, false);
-                        cx.redraw_all();
-                    }
+        // 处理标签按钮点击 - 为卡片添加标签
+        if self.ui.button(id!(tag_button_1)).clicked(&actions) {
+            if let Some(card_detail) = &self.state.card_detail_data {
+                if self.state.all_tags.len() > 0 {
+                    let tag_id = self.state.all_tags[0].id;
+                    println!("点击标签按钮1，添加标签 {} 到卡片 {}", tag_id, card_detail.id);
+                    self.add_tag_to_card(card_detail.id, tag_id);
                 }
-                break; // 只处理第一个匹配的按钮
+            }
+        }
+        
+        if self.ui.button(id!(tag_button_2)).clicked(&actions) {
+            if let Some(card_detail) = &self.state.card_detail_data {
+                if self.state.all_tags.len() > 1 {
+                    let tag_id = self.state.all_tags[1].id;
+                    println!("点击标签按钮2，添加标签 {} 到卡片 {}", tag_id, card_detail.id);
+                    self.add_tag_to_card(card_detail.id, tag_id);
+                }
+            }
+        }
+        
+        if self.ui.button(id!(tag_button_3)).clicked(&actions) {
+            if let Some(card_detail) = &self.state.card_detail_data {
+                if self.state.all_tags.len() > 2 {
+                    let tag_id = self.state.all_tags[2].id;
+                    println!("点击标签按钮3，添加标签 {} 到卡片 {}", tag_id, card_detail.id);
+                    self.add_tag_to_card(card_detail.id, tag_id);
+                }
             }
         }
 
@@ -2001,39 +1107,8 @@ impl MatchEvent for App {
             }
         }
 
-        // 处理Todo复选框点击
-        let todo_check_ids = [
-            id!(todo_check_1), id!(todo_check_2), id!(todo_check_3), 
-            id!(todo_check_4), id!(todo_check_5)
-        ];
-        
-        for (index, check_id) in todo_check_ids.iter().enumerate() {
-            if self.ui.button(*check_id).clicked(&actions) {
-                if let Some(todo) = &self.state.todo_items[index] {
-                    let current_completed = todo.completed.unwrap_or(false);
-                    println!("点击Todo复选框 {}: Todo ID {}, 当前状态: {}", 
-                        index + 1, todo.id, current_completed);
-                    self.state.pending_toggle_todo = Some((todo.id, !current_completed));
-                }
-                break;
-            }
-        }
-
-        // 处理Todo删除按钮点击
-        let todo_delete_ids = [
-            id!(todo_delete_1), id!(todo_delete_2), id!(todo_delete_3), 
-            id!(todo_delete_4), id!(todo_delete_5)
-        ];
-        
-        for (index, delete_id) in todo_delete_ids.iter().enumerate() {
-            if self.ui.button(*delete_id).clicked(&actions) {
-                if let Some(todo) = &self.state.todo_items[index] {
-                    println!("点击删除Todo按钮 {}: Todo ID {}", index + 1, todo.id);
-                    self.state.pending_delete_todo = Some(todo.id);
-                }
-                break;
-            }
-        }
+        // 处理Todo复选框和删除按钮点击 - 现在通过 PortalList 在 draw_walk 中处理
+        // Todo数据存储在 self.state.current_todos 中
 
         // 处理添加Active按钮
         if self.ui.button(id!(add_active_button)).clicked(&actions) {
@@ -2074,20 +1149,8 @@ impl MatchEvent for App {
             }
         }
 
-        // 处理Active删除按钮点击
-        let active_delete_ids = [
-            id!(active_delete_1), id!(active_delete_2), id!(active_delete_3)
-        ];
-        
-        for (index, delete_id) in active_delete_ids.iter().enumerate() {
-            if self.ui.button(*delete_id).clicked(&actions) {
-                if let Some(active) = &self.state.active_items[index] {
-                    println!("点击删除Active按钮 {}: Active ID {}", index + 1, active.id);
-                    self.state.pending_delete_active = Some(active.id);
-                }
-                break;
-            }
-        }
+        // 处理Active删除按钮点击 - 现在通过 PortalList 在 draw_walk 中处理
+        // Active数据存储在 self.state.current_actives 中
 
         // 处理创建卡片按钮点击 - 尝试直接访问
         if self.ui.button(id!(create_button)).clicked(&actions) {
